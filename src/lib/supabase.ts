@@ -23,5 +23,6 @@ export type CookEntry = {
   recipe_id: string
   cooked_at: string
   note: string | null
+  cooked_by: string | null
   created_at: string
 }

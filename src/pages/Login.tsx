@@ -21,7 +21,7 @@ export default function Login({ onLogin }: Props) {
     <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="font-serif text-4xl font-medium mb-1">
-          our <span className="italic text-amber-600">kitchen</span>
+          Rannie's <span className="italic text-green-600">Recipes</span>
         </h1>
         <p className="text-stone-400 text-sm mb-8">a shared recipe book</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -30,7 +30,7 @@ export default function Login({ onLogin }: Props) {
             value={password}
             onChange={e => { setPassword(e.target.value); setError(false) }}
             placeholder="enter password"
-            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-amber-600 transition-colors"
+            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-green-600 transition-colors"
             autoFocus
           />
           {error && (
@@ -38,7 +38,7 @@ export default function Login({ onLogin }: Props) {
           )}
           <button
             type="submit"
-            className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold transition-colors"
+            className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors"
           >
             enter
           </button>
