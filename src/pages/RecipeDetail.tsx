@@ -104,180 +104,173 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   }
 
   return (
-    <div className="min-h-screen bg-stone-200">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm flex items-center gap-1 transition-colors">
-            ← back to recipes
+    <div className="min-h-screen bg-white">
+
+      {/* Top nav */}
+      <div className="border-b border-stone-100">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <button onClick={onBack} className="px-4 py-2.5 text-sm text-stone-500 hover:text-stone-800 transition-colors">
+            ← back
           </button>
           <div className="flex gap-2">
-            <button onClick={onEdit} className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors">edit</button>
-            <button onClick={handleDelete} className="px-4 py-1.5 bg-stone-200 hover:bg-red-100 hover:text-red-600 text-stone-600 text-sm rounded-lg transition-colors">delete</button>
+            <button onClick={onEdit} className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white text-sm rounded-lg transition-colors">edit</button>
+            <button onClick={handleDelete} className="px-4 py-2.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-600 text-sm rounded-lg transition-colors">delete</button>
           </div>
         </div>
+      </div>
 
-        {recipe.photo_url ? (
-          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-56 object-cover rounded-xl mb-4" />
-        ) : (
-          <div className="w-full h-40 bg-green-50 rounded-xl flex items-center justify-center text-6xl mb-4">🍽️</div>
-        )}
+      {/* Hero image */}
+      {recipe.photo_url ? (
+        <img src={recipe.photo_url} alt={recipe.title} className="w-full h-72 object-cover" />
+      ) : (
+        <div className="w-full h-48 bg-stone-50 flex items-center justify-center text-6xl">🍽️</div>
+      )}
 
-        <div className="bg-white rounded-xl px-5 py-4 mb-4">
-          <h1 className="font-serif text-3xl font-medium mb-3">{recipe.title}</h1>
-          {(recipe.prep_time_mins || recipe.cook_time_mins) && (
-            <div className="flex gap-4 mb-3">
-              {recipe.prep_time_mins && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-stone-400">prep</span>
-                  <span className="text-sm text-stone-600">{formatTime(recipe.prep_time_mins)}</span>
-                </div>
-              )}
-              {recipe.cook_time_mins && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-stone-400">cook</span>
-                  <span className="text-sm text-stone-600">{formatTime(recipe.cook_time_mins)}</span>
-                </div>
-              )}
+      <div className="max-w-2xl mx-auto px-6">
+
+        {/* Title block */}
+        <div className="py-8 border-b border-stone-100">
+          <h1 className="font-serif text-5xl font-medium tracking-tight leading-tight mb-4">{recipe.title}</h1>
+
+          {/* Meta row: time + stars */}
+          <div className="flex items-center gap-6 mb-4">
+            {(recipe.prep_time_mins || recipe.cook_time_mins) && (
+              <div className="flex items-center gap-4">
+                {recipe.prep_time_mins && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-stone-400">prep</span>
+                    <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.prep_time_mins)}</span>
+                  </div>
+                )}
+                {recipe.prep_time_mins && recipe.cook_time_mins && <span className="text-stone-200">|</span>}
+                {recipe.cook_time_mins && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-stone-400">cook</span>
+                    <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.cook_time_mins)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map(star => {
+                const filled = star <= (hoverRating ?? rating ?? 0)
+                return (
+                  <button key={star} type="button" onClick={() => handleRate(star)}
+                    onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(null)}
+                    className="transition-transform hover:scale-110">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" strokeLinejoin="round" strokeLinecap="round">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                        fill={filled ? '#1c1917' : 'none'} stroke={filled ? '#1c1917' : '#d6d3d1'} strokeWidth="1.5" />
+                    </svg>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Tags */}
+          {(recipe.tags || []).length > 0 && (
+            <div className="flex gap-2 flex-wrap mb-3">
+              {(recipe.tags || []).map(tag => (
+                <span key={tag} className="text-xs bg-stone-50 border border-stone-900 text-stone-900 px-3 py-1 rounded-full">{tag}</span>
+              ))}
             </div>
           )}
-          <div className="flex gap-1 mb-3">
-            {[1, 2, 3, 4, 5].map(star => {
-              const filled = star <= (hoverRating ?? rating ?? 0)
-              return (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => handleRate(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(null)}
-                  className="transition-transform hover:scale-110"
-                >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5" strokeLinejoin="round" strokeLinecap="round">
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                      fill={filled ? '#16a34a' : 'none'}
-                      stroke={filled ? '#16a34a' : '#d6d3d1'}
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </button>
-              )
-            })}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {(recipe.tags || []).map(tag => (
-              <span key={tag} className="text-xs bg-green-50 border border-green-600 text-green-700 px-3 py-1 rounded-full">{tag}</span>
-            ))}
-          </div>
+
           {recipe.source_url && (
-            <a href={recipe.source_url} target="_blank" rel="noreferrer" className="text-sm text-green-600 hover:text-green-700 mt-3 block">
+            <a href={recipe.source_url} target="_blank" rel="noreferrer" className="text-xs tracking-wide text-stone-900 hover:text-stone-900 transition-colors">
               ↗ view original source
             </a>
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-xl px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">ingredients</p>
-              {recipe.portions && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
-                    <button
-                      onClick={() => setPortions(p => Math.max(1, p - 1))}
-                      className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-base flex items-center justify-center transition-colors"
-                    >−</button>
-                    <span className="text-sm font-medium w-6 text-center">{portions}</span>
-                    <button
-                      onClick={() => setPortions(p => p + 1)}
-                      className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-base flex items-center justify-center transition-colors"
-                    >+</button>
-                  </div>
-                  <span className="text-sm text-stone-400">portions</span>
+        {/* Ingredients */}
+        <div className="py-8 border-b border-stone-100">
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400">ingredients</p>
+            {recipe.portions && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
+                  <button onClick={() => setPortions(p => Math.max(1, p - 1))}
+                    className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">−</button>
+                  <span className="text-sm font-medium w-6 text-center">{portions}</span>
+                  <button onClick={() => setPortions(p => p + 1)}
+                    className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">+</button>
                 </div>
-              )}
-            </div>
-            <ul className="space-y-2">
-              {(recipe.ingredients || []).map((ing, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-base">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0 mt-1.5" />
-                  {scaleIngredient(ing)}
-                </li>
-              ))}
-            </ul>
+                <span className="text-xs text-stone-400">portions</span>
+              </div>
+            )}
           </div>
-
-          <div className="bg-white rounded-xl px-5 py-4">
-            <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-3">method</p>
-            <ol className="space-y-3">
-              {(recipe.steps || []).map((step, i) => (
-                <li key={i} className="flex items-start gap-3 text-base">
-                  <span className="w-6 h-6 rounded-full bg-green-50 text-green-700 text-sm font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
-                  <span className="leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
+          <ul className="space-y-2.5">
+            {(recipe.ingredients || []).map((ing, i) => (
+              <li key={i} className="flex items-start gap-3 text-base text-stone-700">
+                <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
+                {scaleIngredient(ing)}
+              </li>
+            ))}
+          </ul>
         </div>
 
+        {/* Method */}
+        <div className="py-8 border-b border-stone-100">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-5">method</p>
+          <ol className="space-y-5">
+            {(recipe.steps || []).map((step, i) => (
+              <li key={i} className="flex items-start gap-4 text-base text-stone-700">
+                <span className="text-[10px] tracking-widest text-stone-300 font-semibold flex-shrink-0 mt-1.5 w-4">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="leading-relaxed">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Notes */}
         {recipe.notes && (
-          <div className="bg-green-50 border-l-4 border-green-600 rounded-r-2xl px-5 py-4 mb-4">
-            <p className="text-base text-green-800 italic leading-relaxed">{recipe.notes}</p>
+          <div className="py-8 border-b border-stone-100">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-3">notes</p>
+            <p className="text-base text-stone-500 italic leading-relaxed">{recipe.notes}</p>
           </div>
         )}
 
-        <div className="bg-white rounded-xl px-5 py-4 mb-4">
-          <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-4">cooking log</p>
+        {/* Cooking log */}
+        <div className="py-8 pb-16">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-5">cooking log</p>
 
-          <div className="flex flex-col gap-2 mb-4">
+          <div className="flex flex-col gap-2 mb-6">
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={logNote}
-                onChange={e => setLogNote(e.target.value)}
+              <input type="text" value={logNote} onChange={e => setLogNote(e.target.value)}
                 placeholder="add a note about tonight's cook..."
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-green-600 transition-colors"
-              />
-              <input
-                type="text"
-                value={logAuthor}
-                onChange={e => setLogAuthor(e.target.value)}
+                className="flex-1 px-3 py-3 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+              <input type="text" value={logAuthor} onChange={e => setLogAuthor(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') addLogEntry() }}
                 placeholder="who cooked?"
-                className="w-32 px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-green-600 transition-colors"
-              />
+                className="w-32 px-3 py-3 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
             </div>
             <div className="flex items-center gap-3 self-end">
               {logError && <p className="text-red-400 text-xs">{logError}</p>}
-              <button
-                onClick={addLogEntry}
-                disabled={saving || !logNote.trim()}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
-              >
+              <button onClick={addLogEntry} disabled={saving || !logNote.trim()}
+                className="px-5 py-3 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
                 log it
               </button>
             </div>
           </div>
 
           {log.length === 0 ? (
-            <p className="text-stone-400 text-sm">no cooks logged yet</p>
+            <p className="text-stone-300 text-sm italic">no cooks logged yet</p>
           ) : (
-            <div className="space-y-0">
+            <div>
               {log.map((entry, i) => (
-                <div key={entry.id} className={`flex items-start gap-3 py-3 ${i < log.length - 1 ? 'border-b border-stone-100' : ''}`}>
-                  <div className="w-2 h-2 rounded-full bg-green-600 flex-shrink-0 mt-1.5" />
+                <div key={entry.id} className={`flex items-start gap-4 py-4 ${i < log.length - 1 ? 'border-b border-stone-100' : ''}`}>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-green-600 mb-0.5">
-                      {formatDate(entry.cooked_at)}{entry.cooked_by && <span className="text-stone-400 font-normal"> · {entry.cooked_by}</span>}
+                    <p className="text-xs text-stone-400 mb-1">
+                      {formatDate(entry.cooked_at)}{entry.cooked_by && <span className="text-stone-300"> · {entry.cooked_by}</span>}
                     </p>
-                    {entry.note && <p className="text-base text-stone-500 italic">{entry.note}</p>}
+                    {entry.note && <p className="text-base text-stone-600 italic">{entry.note}</p>}
                   </div>
-                  <button
-                    onClick={() => deleteLogEntry(entry.id)}
-                    className="text-xs text-red-400 hover:text-red-600 transition-colors flex-shrink-0 mt-0.5"
-                  >
+                  <button onClick={() => deleteLogEntry(entry.id)}
+                    className="px-3 py-1.5 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
                     delete
                   </button>
                 </div>

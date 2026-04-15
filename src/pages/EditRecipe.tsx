@@ -14,7 +14,7 @@ function TimeInput({ label, hours, mins, onHoursChange, onMinsChange }: {
   onHoursChange: (v: string) => void
   onMinsChange: (v: string) => void
 }) {
-  const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-green-600 transition-colors text-sm"
+  const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-stone-900 transition-colors text-sm"
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">{label}</p>
@@ -121,7 +121,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   }
 
   const labelClass = "text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1 block"
-  const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-green-600 transition-colors text-sm"
+  const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-sm"
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -208,7 +208,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
                 </button>
               </div>
             ) : (
-              <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-stone-200 rounded-lg cursor-pointer hover:border-green-400 transition-colors">
+              <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-stone-200 rounded-lg cursor-pointer hover:border-stone-400 transition-colors">
                 <span className="text-sm text-stone-400">
                   {uploading ? 'uploading...' : 'click to upload a photo'}
                 </span>
@@ -223,7 +223,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg font-semibold text-sm transition-colors"
+              className="px-6 py-2.5 bg-stone-800 hover:bg-stone-900 disabled:opacity-50 text-white rounded-lg font-semibold text-sm transition-colors"
             >
               {saving ? 'saving...' : 'save changes'}
             </button>

@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Nunito', 'sans-serif'],
-        serif: ['Lora', 'serif'],
+        sans: ['DM Sans', 'sans-serif'],
+        serif: ['Space Grotesk', 'sans-serif'],
       },
       colors: {
         amber: {
