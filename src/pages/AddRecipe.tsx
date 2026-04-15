@@ -8,6 +8,7 @@ type Props = {
 
 export default function AddRecipe({ onBack, onSaved }: Props) {
   const [title, setTitle] = useState('')
+  const [portions, setPortions] = useState('')
   const [tags, setTags] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [ingredients, setIngredients] = useState('')
@@ -55,6 +56,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
       steps: steps.split('\n').map(s => s.trim()).filter(Boolean),
       notes: notes.trim() || null,
       photo_url: photoUrl.trim() || null,
+      portions: portions ? parseInt(portions) : null,
     })
 
     if (err) {
@@ -83,7 +85,11 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Mum's Bolognese" className={inputClass} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>portions</label>
+              <input type="number" min="1" value={portions} onChange={e => setPortions(e.target.value)} placeholder="e.g. 4" className={inputClass} />
+            </div>
             <div>
               <label className={labelClass}>tags</label>
               <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="italian, pasta, quick" className={inputClass} />

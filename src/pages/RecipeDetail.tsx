@@ -9,6 +9,9 @@ type Props = {
 }
 
 export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props) {
+  const [rating, setRating] = useState<number | null>(recipe.rating)
+  const [hoverRating, setHoverRating] = useState<number | null>(null)
+  const [portions, setPortions] = useState<number>(recipe.portions ?? 1)
   const [log, setLog] = useState<CookEntry[]>([])
   const [logNote, setLogNote] = useState('')
   const [logAuthor, setLogAuthor] = useState('')
@@ -49,10 +52,43 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     setLog(prev => prev.filter(e => e.id !== id))
   }
 
+  async function handleRate(stars: number) {
+    const newRating = stars === rating ? null : stars
+    setRating(newRating)
+    await supabase.from('recipes').update({ rating: newRating }).eq('id', recipe.id)
+  }
+
   async function handleDelete() {
     if (!confirm(`Delete "${recipe.title}"? This can't be undone.`)) return
     await supabase.from('recipes').delete().eq('id', recipe.id)
     onDelete()
+  }
+
+  function parseFraction(s: string): number {
+    const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+    if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3])
+    const frac = s.match(/^(\d+)\/(\d+)$/)
+    if (frac) return parseInt(frac[1]) / parseInt(frac[2])
+    return parseFloat(s)
+  }
+
+  function formatAmount(n: number): string {
+    if (n === Math.round(n)) return String(Math.round(n))
+    const whole = Math.floor(n)
+    const dec = n - whole
+    const fracs: [number, string][] = [[0.25,'¼'],[0.33,'⅓'],[0.5,'½'],[0.67,'⅔'],[0.75,'¾']]
+    for (const [val, sym] of fracs) {
+      if (Math.abs(dec - val) < 0.07) return whole > 0 ? `${whole} ${sym}` : sym
+    }
+    return n % 1 === 0 ? String(n) : n.toFixed(1)
+  }
+
+  function scaleIngredient(ingredient: string): string {
+    if (!recipe.portions) return ingredient
+    const factor = portions / recipe.portions
+    return ingredient.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/, match =>
+      formatAmount(parseFraction(match) * factor)
+    )
   }
 
   function formatDate(str: string) {
@@ -60,7 +96,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-200">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm flex items-center gap-1 transition-colors">
@@ -73,41 +109,79 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {recipe.photo_url ? (
-          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-56 object-cover rounded-2xl mb-6" />
+          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-56 object-cover rounded-xl mb-6" />
         ) : (
-          <div className="w-full h-40 bg-green-50 rounded-2xl flex items-center justify-center text-6xl mb-6">🍽️</div>
+          <div className="w-full h-40 bg-green-50 rounded-xl flex items-center justify-center text-6xl mb-6">🍽️</div>
         )}
 
-        <div className="mb-3">
-          <h1 className="font-serif text-3xl font-medium">{recipe.title}</h1>
+        <div className="bg-white rounded-xl px-5 py-4 mb-4">
+          <h1 className="font-serif text-3xl font-medium mb-3">{recipe.title}</h1>
+          <div className="flex gap-1 mb-3">
+            {[1, 2, 3, 4, 5].map(star => {
+              const filled = star <= (hoverRating ?? rating ?? 0)
+              return (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => handleRate(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(null)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" strokeLinejoin="round" strokeLinecap="round">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                      fill={filled ? '#16a34a' : 'none'}
+                      stroke={filled ? '#16a34a' : '#d6d3d1'}
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                </button>
+              )
+            })}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {(recipe.tags || []).map(tag => (
+              <span key={tag} className="text-xs bg-green-50 border border-green-600 text-green-700 px-3 py-1 rounded-full">{tag}</span>
+            ))}
+          </div>
+          {recipe.source_url && (
+            <a href={recipe.source_url} target="_blank" rel="noreferrer" className="text-sm text-green-600 hover:text-green-700 mt-3 block">
+              ↗ view original source
+            </a>
+          )}
+          {recipe.portions && (
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-xs font-semibold uppercase tracking-widest text-stone-600">portions</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPortions(p => Math.max(1, p - 1))}
+                  className="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm flex items-center justify-center transition-colors"
+                >−</button>
+                <span className="text-sm font-medium w-4 text-center">{portions}</span>
+                <button
+                  onClick={() => setPortions(p => p + 1)}
+                  className="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm flex items-center justify-center transition-colors"
+                >+</button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex gap-2 flex-wrap mb-3">
-          {(recipe.tags || []).map(tag => (
-            <span key={tag} className="text-xs bg-green-50 border border-green-600 text-green-700 px-3 py-1 rounded-full">{tag}</span>
-          ))}
-        </div>
-
-        {recipe.source_url && (
-          <a href={recipe.source_url} target="_blank" rel="noreferrer" className="text-sm text-green-600 hover:text-green-700 mb-6 block">
-            ↗ view original source
-          </a>
-        )}
-
-        <div className="grid md:grid-cols-2 gap-8 mt-8 mb-8">
-          <div>
+        <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="bg-white rounded-xl px-5 py-4">
             <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-3">ingredients</p>
             <ul className="space-y-2">
               {(recipe.ingredients || []).map((ing, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-base">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-600 flex-shrink-0 mt-1.5" />
-                  {ing}
+                  {scaleIngredient(ing)}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div>
+          <div className="bg-white rounded-xl px-5 py-4">
             <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-3">method</p>
             <ol className="space-y-3">
               {(recipe.steps || []).map((step, i) => (
@@ -123,12 +197,12 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {recipe.notes && (
-          <div className="bg-green-50 border-l-4 border-green-600 rounded-r-xl px-4 py-3 mb-8">
+          <div className="bg-green-50 border-l-4 border-green-600 rounded-r-2xl px-5 py-4 mb-4">
             <p className="text-base text-green-800 italic leading-relaxed">{recipe.notes}</p>
           </div>
         )}
 
-        <div>
+        <div className="bg-white rounded-xl px-5 py-4 mb-4">
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-4">cooking log</p>
 
           <div className="flex flex-col gap-2 mb-6">
@@ -176,7 +250,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                   </div>
                   <button
                     onClick={() => deleteLogEntry(entry.id)}
-                    className="text-xs text-stone-200 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors flex-shrink-0 mt-0.5"
                   >
                     delete
                   </button>

@@ -14,6 +14,8 @@ export type Recipe = {
   steps: string[]
   notes: string | null
   photo_url: string | null
+  rating: number | null
+  portions: number | null
   created_at: string
   cook_log?: CookEntry[]
 }
