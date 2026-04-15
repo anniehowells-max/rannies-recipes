@@ -44,6 +44,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   }
 
   async function deleteLogEntry(id: string) {
+    if (!confirm('Delete this log entry? This can\'t be undone.')) return
     await supabase.from('cook_log').delete().eq('id', id)
     setLog(prev => prev.filter(e => e.id !== id))
   }
