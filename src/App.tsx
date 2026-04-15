@@ -3,9 +3,10 @@ import Login from './pages/Login'
 import RecipeList from './pages/RecipeList'
 import RecipeDetail from './pages/RecipeDetail'
 import AddRecipe from './pages/AddRecipe'
+import EditRecipe from './pages/EditRecipe'
 import { type Recipe } from './lib/supabase'
 
-type Screen = 'login' | 'list' | 'detail' | 'add'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit'
 
 export default function App() {
   const isAuthed = sessionStorage.getItem('kitchen-auth') === 'true'
@@ -28,6 +29,17 @@ export default function App() {
         recipe={selectedRecipe}
         onBack={() => setScreen('list')}
         onDelete={refresh}
+        onEdit={() => setScreen('edit')}
+      />
+    )
+  }
+
+  if (screen === 'edit' && selectedRecipe) {
+    return (
+      <EditRecipe
+        recipe={selectedRecipe}
+        onBack={() => setScreen('detail')}
+        onSaved={updated => { setSelectedRecipe(updated); setScreen('detail') }}
       />
     )
   }

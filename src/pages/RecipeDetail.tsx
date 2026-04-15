@@ -5,9 +5,10 @@ type Props = {
   recipe: Recipe
   onBack: () => void
   onDelete: () => void
+  onEdit: () => void
 }
 
-export default function RecipeDetail({ recipe, onBack, onDelete }: Props) {
+export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props) {
   const [log, setLog] = useState<CookEntry[]>([])
   const [logNote, setLogNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -59,7 +60,10 @@ export default function RecipeDetail({ recipe, onBack, onDelete }: Props) {
 
         <div className="flex items-start justify-between gap-4 mb-3">
           <h1 className="font-serif text-3xl font-medium">{recipe.title}</h1>
-          <button onClick={handleDelete} className="text-xs text-stone-300 hover:text-red-400 transition-colors flex-shrink-0 mt-1">delete</button>
+          <div className="flex gap-3 flex-shrink-0 mt-1">
+            <button onClick={onEdit} className="text-xs text-stone-300 hover:text-amber-600 transition-colors">edit</button>
+            <button onClick={handleDelete} className="text-xs text-stone-300 hover:text-red-400 transition-colors">delete</button>
+          </div>
         </div>
 
         <div className="flex gap-2 flex-wrap mb-3">

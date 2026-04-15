@@ -1,45 +1,22 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, type Recipe } from '../lib/supabase'
 
 type Props = {
+  recipe: Recipe
   onBack: () => void
-  onSaved: () => void
+  onSaved: (updated: Recipe) => void
 }
 
-export default function AddRecipe({ onBack, onSaved }: Props) {
-  const [title, setTitle] = useState('')
-  const [tags, setTags] = useState('')
-  const [sourceUrl, setSourceUrl] = useState('')
-  const [ingredients, setIngredients] = useState('')
-  const [steps, setSteps] = useState('')
-  const [notes, setNotes] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-  const [photoPreview, setPhotoPreview] = useState('')
-  const [uploading, setUploading] = useState(false)
+export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
+  const [title, setTitle] = useState(recipe.title)
+  const [tags, setTags] = useState((recipe.tags || []).join(', '))
+  const [sourceUrl, setSourceUrl] = useState(recipe.source_url || '')
+  const [ingredients, setIngredients] = useState((recipe.ingredients || []).join('\n'))
+  const [steps, setSteps] = useState((recipe.steps || []).join('\n'))
+  const [notes, setNotes] = useState(recipe.notes || '')
+  const [photoUrl, setPhotoUrl] = useState(recipe.photo_url || '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setPhotoPreview(URL.createObjectURL(file))
-    setUploading(true)
-    setError('')
-    const ext = file.name.split('.').pop()
-    const path = `${crypto.randomUUID()}.${ext}`
-    const { error: uploadErr } = await supabase.storage
-      .from('recipe-photos')
-      .upload(path, file)
-    if (uploadErr) {
-      setError('photo upload failed — try again')
-      setPhotoPreview('')
-      setUploading(false)
-      return
-    }
-    const { data } = supabase.storage.from('recipe-photos').getPublicUrl(path)
-    setPhotoUrl(data.publicUrl)
-    setUploading(false)
-  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -47,7 +24,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
     setSaving(true)
     setError('')
 
-    const { error: err } = await supabase.from('recipes').insert({
+    const updates = {
       title: title.trim(),
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       source_url: sourceUrl.trim() || null,
@@ -55,13 +32,20 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
       steps: steps.split('\n').map(s => s.trim()).filter(Boolean),
       notes: notes.trim() || null,
       photo_url: photoUrl.trim() || null,
-    })
+    }
 
-    if (err) {
+    const { data, error: err } = await supabase
+      .from('recipes')
+      .update(updates)
+      .eq('id', recipe.id)
+      .select()
+      .single()
+
+    if (err || !data) {
       setError('something went wrong — try again')
       setSaving(false)
     } else {
-      onSaved()
+      onSaved(data)
     }
   }
 
@@ -72,10 +56,10 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
     <div className="min-h-screen bg-stone-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm mb-6 flex items-center gap-1 transition-colors">
-          ← back to recipes
+          ← back to recipe
         </button>
 
-        <h1 className="font-serif text-3xl font-medium mb-8">add a recipe</h1>
+        <h1 className="font-serif text-3xl font-medium mb-8">edit recipe</h1>
 
         <form onSubmit={handleSave} className="flex flex-col gap-5">
           <div>
@@ -131,26 +115,8 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
           </div>
 
           <div>
-            <label className={labelClass}>photo</label>
-            {photoPreview ? (
-              <div className="relative mb-2">
-                <img src={photoPreview} alt="preview" className="w-full h-48 object-cover rounded-lg" />
-                <button
-                  type="button"
-                  onClick={() => { setPhotoPreview(''); setPhotoUrl('') }}
-                  className="absolute top-2 right-2 bg-white/80 hover:bg-white text-stone-500 text-xs px-2 py-1 rounded-md transition-colors"
-                >
-                  remove
-                </button>
-              </div>
-            ) : (
-              <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-stone-200 rounded-lg cursor-pointer hover:border-amber-400 transition-colors">
-                <span className="text-sm text-stone-400">
-                  {uploading ? 'uploading...' : 'click to upload a photo'}
-                </span>
-                <input type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" disabled={uploading} />
-              </label>
-            )}
+            <label className={labelClass}>photo URL</label>
+            <input type="text" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="paste an image link" className={inputClass} />
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -161,7 +127,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
               disabled={saving}
               className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg font-semibold text-sm transition-colors"
             >
-              {saving ? 'saving...' : 'save recipe'}
+              {saving ? 'saving...' : 'save changes'}
             </button>
             <button
               type="button"
