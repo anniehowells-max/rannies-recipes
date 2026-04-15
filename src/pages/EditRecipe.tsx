@@ -15,8 +15,32 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   const [steps, setSteps] = useState((recipe.steps || []).join('\n'))
   const [notes, setNotes] = useState(recipe.notes || '')
   const [photoUrl, setPhotoUrl] = useState(recipe.photo_url || '')
+  const [photoPreview, setPhotoPreview] = useState(recipe.photo_url || '')
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoPreview(URL.createObjectURL(file))
+    setUploading(true)
+    setError('')
+    const ext = file.name.split('.').pop()
+    const path = `${crypto.randomUUID()}.${ext}`
+    const { error: uploadErr } = await supabase.storage
+      .from('recipe-photos')
+      .upload(path, file)
+    if (uploadErr) {
+      setError('photo upload failed — try again')
+      setPhotoPreview(recipe.photo_url || '')
+      setUploading(false)
+      return
+    }
+    const { data } = supabase.storage.from('recipe-photos').getPublicUrl(path)
+    setPhotoUrl(data.publicUrl)
+    setUploading(false)
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -115,8 +139,26 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
           </div>
 
           <div>
-            <label className={labelClass}>photo URL</label>
-            <input type="text" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="paste an image link" className={inputClass} />
+            <label className={labelClass}>photo</label>
+            {photoPreview ? (
+              <div className="relative mb-2">
+                <img src={photoPreview} alt="preview" className="w-full h-48 object-cover rounded-lg" />
+                <button
+                  type="button"
+                  onClick={() => { setPhotoPreview(''); setPhotoUrl('') }}
+                  className="absolute top-2 right-2 bg-white/80 hover:bg-white text-stone-500 text-xs px-2 py-1 rounded-md transition-colors"
+                >
+                  remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-stone-200 rounded-lg cursor-pointer hover:border-amber-400 transition-colors">
+                <span className="text-sm text-stone-400">
+                  {uploading ? 'uploading...' : 'click to upload a photo'}
+                </span>
+                <input type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" disabled={uploading} />
+              </label>
+            )}
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
