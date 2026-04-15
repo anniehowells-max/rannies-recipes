@@ -36,6 +36,9 @@ function TimeInput({ label, hours, mins, onHoursChange, onMinsChange }: {
 }
 
 export default function AddRecipe({ onBack, onSaved }: Props) {
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
   const [title, setTitle] = useState('')
   const [portions, setPortions] = useState('')
   const [prepHours, setPrepHours] = useState('')
@@ -52,6 +55,34 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  async function handleImport() {
+    if (!importUrl.trim()) return
+    setImporting(true)
+    setImportError('')
+    try {
+      const res = await fetch('/api/import-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Import failed')
+      if (data.title) setTitle(data.title)
+      if (data.ingredients?.length) setIngredients(data.ingredients.join('\n'))
+      if (data.steps?.length) setSteps(data.steps.join('\n'))
+      if (data.tags?.length) setTags(data.tags.join(', '))
+      if (data.notes) setNotes(data.notes)
+      if (data.photo_url) { setPhotoUrl(data.photo_url); setPhotoPreview(data.photo_url) }
+      if (data.source_url) setSourceUrl(data.source_url)
+      if (data.portions) setPortions(String(data.portions))
+      if (data.prep_time_mins) { setPrepHours(String(Math.floor(data.prep_time_mins / 60))); setPrepMins(String(data.prep_time_mins % 60)) }
+      if (data.cook_time_mins) { setCookHours(String(Math.floor(data.cook_time_mins / 60))); setCookMins(String(data.cook_time_mins % 60)) }
+    } catch (err) {
+      setImportError((err as Error).message)
+    }
+    setImporting(false)
+  }
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -118,6 +149,29 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
         </button>
 
         <h1 className="font-serif text-3xl font-medium mb-8">add a recipe</h1>
+
+        <div className="mb-6">
+          <label className={labelClass}>import from URL</label>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={importUrl}
+              onChange={e => setImportUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleImport() } }}
+              placeholder="paste a recipe URL to auto-fill..."
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing || !importUrl.trim()}
+              className="px-4 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors whitespace-nowrap"
+            >
+              {importing ? 'importing...' : 'import'}
+            </button>
+          </div>
+          {importError && <p className="text-red-400 text-xs mt-1">{importError}</p>}
+        </div>
 
         <form onSubmit={handleSave} className="flex flex-col gap-5">
           <div>
