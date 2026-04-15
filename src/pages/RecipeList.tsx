@@ -53,7 +53,7 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
           <h1 className="font-serif text-4xl font-medium tracking-tight">
             Rannie's <span className="italic text-stone-900">Recipes</span>
           </h1>
-          <button onClick={onAdd} className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white text-sm rounded-lg transition-colors">
+          <button onClick={onAdd} className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white text-sm rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
             + add recipe
           </button>
         </div>
@@ -72,7 +72,7 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
 
         {/* Tag filters */}
         {allTags.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-8">
+          <div className="flex gap-2 flex-wrap mb-6">
             <button
               onClick={() => setActiveTag(null)}
               className={`px-4 py-2 rounded-full text-xs border transition-colors ${
@@ -97,23 +97,26 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
             ))}
           </div>
         )}
+      </div>
 
-        {/* Grid */}
-        {loading ? (
-          <p className="text-stone-300 text-sm">loading...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-stone-300 text-sm italic">no recipes yet — add your first one!</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-8">
-            {filtered.map(recipe => (
-              <div key={recipe.id} onClick={() => onSelect(recipe)} className="cursor-pointer group">
-                <div className="aspect-[4/3] bg-stone-50 overflow-hidden mb-3">
-                  {recipe.photo_url
-                    ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
-                  }
-                </div>
-                <p className="font-serif text-base font-medium leading-snug mb-1 group-hover:text-stone-900 transition-colors">{recipe.title}</p>
+      {/* Full-bleed grid */}
+      {loading ? (
+        <p className="px-6 text-stone-300 text-sm">loading...</p>
+      ) : filtered.length === 0 ? (
+        <p className="px-6 text-stone-300 text-sm italic">no recipes yet — add your first one!</p>
+      ) : (
+        <div className="border-t border-stone-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+          {filtered.map(recipe => (
+            <div key={recipe.id} onClick={() => onSelect(recipe)}
+              className="cursor-pointer group border-b border-r border-stone-200">
+              <div className="aspect-[4/3] bg-stone-50 overflow-hidden">
+                {recipe.photo_url
+                  ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
+                }
+              </div>
+              <div className="p-4">
+                <p className="font-serif text-base font-medium leading-snug mb-1.5 group-hover:text-stone-500 transition-colors">{recipe.title}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {(recipe.tags || []).slice(0, 2).map(tag => (
                     <span key={tag} className="text-[10px] tracking-wider uppercase text-stone-400">{tag}</span>
@@ -124,10 +127,10 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
