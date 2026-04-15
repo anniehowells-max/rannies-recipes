@@ -98,7 +98,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   return (
     <div className="min-h-screen bg-stone-200">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm flex items-center gap-1 transition-colors">
             ← back to recipes
           </button>
@@ -109,9 +109,9 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {recipe.photo_url ? (
-          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-56 object-cover rounded-xl mb-6" />
+          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-56 object-cover rounded-xl mb-4" />
         ) : (
-          <div className="w-full h-40 bg-green-50 rounded-xl flex items-center justify-center text-6xl mb-6">🍽️</div>
+          <div className="w-full h-40 bg-green-50 rounded-xl flex items-center justify-center text-6xl mb-4">🍽️</div>
         )}
 
         <div className="bg-white rounded-xl px-5 py-4 mb-4">
@@ -207,7 +207,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         <div className="bg-white rounded-xl px-5 py-4 mb-4">
           <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-4">cooking log</p>
 
-          <div className="flex flex-col gap-2 mb-6">
+          <div className="flex flex-col gap-2 mb-4">
             <div className="flex gap-2">
               <input
                 type="text"
