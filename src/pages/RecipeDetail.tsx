@@ -126,10 +126,10 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         <div className="w-full h-48 bg-stone-50 flex items-center justify-center text-6xl">🍽️</div>
       )}
 
-      <div className="max-w-2xl mx-auto px-6">
+      <div className="max-w-2xl mx-auto">
 
         {/* Title block */}
-        <div className="py-8 border-b border-stone-100">
+        <div className="py-8 px-6 border-b-2 border-stone-200">
           <h1 className="font-serif text-5xl font-medium tracking-tight leading-tight mb-4">{recipe.title}</h1>
 
           {/* Meta row: time + stars */}
@@ -185,9 +185,9 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {/* Ingredients */}
-        <div className="py-8 border-b border-stone-100">
+        <div className="py-8 px-6 border-b-2 border-stone-200">
           <div className="flex items-center justify-between mb-5">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400">ingredients</p>
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
             {recipe.portions && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
@@ -212,8 +212,8 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {/* Method */}
-        <div className="py-8 border-b border-stone-100">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-5">method</p>
+        <div className="py-8 px-6 border-b-2 border-stone-200">
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">method</p>
           <ol className="space-y-5">
             {(recipe.steps || []).map((step, i) => (
               <li key={i} className="flex items-start gap-4 text-base text-stone-700">
@@ -228,15 +228,15 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
         {/* Notes */}
         {recipe.notes && (
-          <div className="py-8 border-b border-stone-100">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-3">notes</p>
+          <div className="py-8 px-6 border-b-2 border-stone-200">
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">notes</p>
             <p className="text-base text-stone-500 italic leading-relaxed">{recipe.notes}</p>
           </div>
         )}
 
         {/* Cooking log */}
-        <div className="py-8 pb-16">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-400 mb-5">cooking log</p>
+        <div className="py-8 pb-16 px-6">
+          <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">cooking log</p>
 
           <div className="flex flex-col gap-2 mb-6">
             <div className="flex gap-2">
