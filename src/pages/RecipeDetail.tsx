@@ -150,27 +150,29 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               ↗ view original source
             </a>
           )}
-          {recipe.portions && (
-            <div className="flex items-center gap-3 mt-4">
-              <span className="text-xs font-semibold uppercase tracking-widest text-stone-600">portions</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPortions(p => Math.max(1, p - 1))}
-                  className="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm flex items-center justify-center transition-colors"
-                >−</button>
-                <span className="text-sm font-medium w-4 text-center">{portions}</span>
-                <button
-                  onClick={() => setPortions(p => p + 1)}
-                  className="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm flex items-center justify-center transition-colors"
-                >+</button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-xl px-5 py-4">
-            <p className="text-sm font-semibold uppercase tracking-widest text-stone-600 mb-3">ingredients</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold uppercase tracking-widest text-stone-600">ingredients</p>
+              {recipe.portions && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
+                    <button
+                      onClick={() => setPortions(p => Math.max(1, p - 1))}
+                      className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-base flex items-center justify-center transition-colors"
+                    >−</button>
+                    <span className="text-sm font-medium w-6 text-center">{portions}</span>
+                    <button
+                      onClick={() => setPortions(p => p + 1)}
+                      className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-base flex items-center justify-center transition-colors"
+                    >+</button>
+                  </div>
+                  <span className="text-sm text-stone-400">portions</span>
+                </div>
+              )}
+            </div>
             <ul className="space-y-2">
               {(recipe.ingredients || []).map((ing, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-base">
