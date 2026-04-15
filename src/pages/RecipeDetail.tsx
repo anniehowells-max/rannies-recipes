@@ -242,11 +242,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             <div className="flex gap-2">
               <input type="text" value={logNote} onChange={e => setLogNote(e.target.value)}
                 placeholder="add a note about tonight's cook..."
-                className="flex-1 px-3 py-3 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                className="flex-1 px-3 py-3 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
               <input type="text" value={logAuthor} onChange={e => setLogAuthor(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') addLogEntry() }}
                 placeholder="who cooked?"
-                className="w-32 px-3 py-3 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                className="w-32 px-3 py-3 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
             </div>
             <div className="flex items-center gap-3 self-end">
               {logError && <p className="text-red-400 text-xs">{logError}</p>}

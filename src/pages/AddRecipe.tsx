@@ -13,7 +13,7 @@ function TimeInput({ label, hours, mins, onHoursChange, onMinsChange }: {
   onHoursChange: (v: string) => void
   onMinsChange: (v: string) => void
 }) {
-  const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-stone-900 transition-colors text-sm"
+  const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-stone-900 transition-colors text-base"
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">{label}</p>
@@ -108,7 +108,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
   }
 
   const labelClass = "text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1 block"
-  const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-sm"
+  const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-base"
 
   return (
     <div className="min-h-screen bg-stone-50">

@@ -30,7 +30,7 @@ export default function Login({ onLogin }: Props) {
             value={password}
             onChange={e => { setPassword(e.target.value); setError(false) }}
             placeholder="enter password"
-            className="w-full py-3 border-b border-stone-200 bg-transparent text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 transition-colors text-sm"
+            className="w-full py-3 border-b border-stone-200 bg-transparent text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 transition-colors text-base"
             autoFocus
           />
           {error && (
