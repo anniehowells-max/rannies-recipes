@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Login from './pages/Login'
 import RecipeList from './pages/RecipeList'
 import RecipeDetail from './pages/RecipeDetail'
@@ -13,6 +13,8 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>(isAuthed ? 'list' : 'login')
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => { window.scrollTo(0, 0) }, [screen])
 
   function refresh() {
     setRefreshKey(k => k + 1)

@@ -56,12 +56,17 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  function isYouTubeUrl(url: string): boolean {
+    return /(?:youtube\.com\/(?:watch|shorts|embed)|youtu\.be\/)/.test(url)
+  }
+
   async function handleImport() {
     if (!importUrl.trim()) return
     setImporting(true)
     setImportError('')
     try {
-      const res = await fetch('/api/import-recipe', {
+      const endpoint = isYouTubeUrl(importUrl.trim()) ? '/api/import-youtube' : '/api/import-recipe'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: importUrl.trim() }),
