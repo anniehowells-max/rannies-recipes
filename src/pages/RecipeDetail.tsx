@@ -12,6 +12,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [log, setLog] = useState<CookEntry[]>([])
   const [logNote, setLogNote] = useState('')
   const [logAuthor, setLogAuthor] = useState('')
+  const [logError, setLogError] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -26,14 +27,19 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   async function addLogEntry() {
     if (!logNote.trim()) return
     setSaving(true)
-    const { data } = await supabase
+    setLogError('')
+    const { data, error } = await supabase
       .from('cook_log')
       .insert({ recipe_id: recipe.id, note: logNote.trim(), cooked_by: logAuthor.trim() || null })
       .select()
       .single()
-    if (data) setLog(prev => [data, ...prev])
-    setLogNote('')
-    setLogAuthor('')
+    if (error) {
+      setLogError('couldn\'t save — ' + error.message)
+    } else if (data) {
+      setLog(prev => [data, ...prev])
+      setLogNote('')
+      setLogAuthor('')
+    }
     setSaving(false)
   }
 
@@ -142,13 +148,16 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                 className="w-32 px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-green-600 transition-colors"
               />
             </div>
-            <button
-              onClick={addLogEntry}
-              disabled={saving || !logNote.trim()}
-              className="self-end px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
-            >
-              log it
-            </button>
+            <div className="flex items-center gap-3 self-end">
+              {logError && <p className="text-red-400 text-xs">{logError}</p>}
+              <button
+                onClick={addLogEntry}
+                disabled={saving || !logNote.trim()}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
+              >
+                log it
+              </button>
+            </div>
           </div>
 
           {log.length === 0 ? (
