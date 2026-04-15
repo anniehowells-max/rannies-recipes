@@ -178,8 +178,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           )}
 
           {recipe.source_url && (
-            <a href={recipe.source_url} target="_blank" rel="noreferrer" className="text-xs tracking-wide text-stone-900 hover:text-stone-900 transition-colors">
-              ↗ view original source
+            <a href={recipe.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs tracking-wide text-stone-900 hover:text-stone-900 transition-colors">
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="#1c1917" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 13L13 3M13 3H6M13 3V10" />
+              </svg>
+              view original source
             </a>
           )}
         </div>
