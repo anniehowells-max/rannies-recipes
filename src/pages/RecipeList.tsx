@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase, type Recipe } from '../lib/supabase'
 
 type Props = {
@@ -11,8 +11,20 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [activeTag, setActiveTag] = useState<string | null>(null)
+  const [activeTags, setActiveTags] = useState<string[]>([])
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [cookCounts, setCookCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setTagDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -40,9 +52,13 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
 
   const filtered = recipes.filter(r => {
     const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
-    const matchTag = !activeTag || (r.tags || []).includes(activeTag)
+    const matchTag = activeTags.length === 0 || activeTags.some(t => (r.tags || []).includes(t))
     return matchSearch && matchTag
   })
+
+  function toggleTag(tag: string) {
+    setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -72,29 +88,51 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
 
         {/* Tag filters */}
         {allTags.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-6">
+          <div className="relative mb-6" ref={dropdownRef}>
             <button
-              onClick={() => setActiveTag(null)}
-              className={`px-4 py-2 rounded-full text-xs border transition-colors ${
-                !activeTag
+              onClick={() => setTagDropdownOpen(o => !o)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs border transition-colors ${
+                activeTags.length > 0
                   ? 'bg-stone-50 border-stone-900 text-stone-900'
                   : 'bg-white border-stone-200 text-stone-400 hover:border-stone-300'
               }`}
             >
-              all
+              {activeTags.length > 0 ? `${activeTags.length} tag${activeTags.length > 1 ? 's' : ''} selected` : 'filter by tag'}
+              <span className="text-[10px]">{tagDropdownOpen ? '▲' : '▼'}</span>
             </button>
-            {allTags.map(tag => (
-              <button key={tag}
-                onClick={() => setActiveTag(tag === activeTag ? null : tag)}
-                className={`px-4 py-2 rounded-full text-xs border transition-colors ${
-                  activeTag === tag
-                    ? 'bg-stone-50 border-stone-900 text-stone-900'
-                    : 'bg-white border-stone-200 text-stone-400 hover:border-stone-300'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
+            {tagDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-lg z-10 min-w-48 py-1">
+                {activeTags.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setActiveTags([])}
+                      className="w-full text-left px-4 py-2 text-xs text-stone-400 hover:text-stone-700 transition-colors"
+                    >
+                      clear all
+                    </button>
+                    <div className="border-t border-stone-100 mx-2 mb-1" />
+                  </>
+                )}
+                {allTags.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-stone-50 transition-colors flex items-center gap-2.5"
+                  >
+                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
+                      activeTags.includes(tag) ? 'bg-stone-900 border-stone-900' : 'border-stone-300'
+                    }`}>
+                      {activeTags.includes(tag) && (
+                        <svg viewBox="0 0 10 8" className="w-2 h-2 fill-white">
+                          <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
