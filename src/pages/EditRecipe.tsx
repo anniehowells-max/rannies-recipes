@@ -7,9 +7,47 @@ type Props = {
   onSaved: (updated: Recipe) => void
 }
 
+function TimeInput({ label, hours, mins, onHoursChange, onMinsChange }: {
+  label: string
+  hours: string
+  mins: string
+  onHoursChange: (v: string) => void
+  onMinsChange: (v: string) => void
+}) {
+  const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-green-600 transition-colors text-sm"
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number" min="0" max="23" value={hours}
+          onChange={e => onHoursChange(e.target.value)}
+          placeholder="0" className={inputClass}
+        />
+        <span className="text-stone-400 text-sm">h</span>
+        <input
+          type="number" min="0" max="59" value={mins}
+          onChange={e => onMinsChange(e.target.value)}
+          placeholder="0" className={inputClass}
+        />
+        <span className="text-stone-400 text-sm">m</span>
+      </div>
+    </div>
+  )
+}
+
+function minsToHoursAndMins(total: number | null): [string, string] {
+  if (!total) return ['', '']
+  return [String(Math.floor(total / 60)), String(total % 60)]
+}
+
 export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   const [title, setTitle] = useState(recipe.title)
   const [portions, setPortions] = useState(recipe.portions ? String(recipe.portions) : '')
+  const [prepHours, setPrepHours] = useState(minsToHoursAndMins(recipe.prep_time_mins)[0])
+  const [prepMins, setPrepMins] = useState(minsToHoursAndMins(recipe.prep_time_mins)[1])
+  const [cookHours, setCookHours] = useState(minsToHoursAndMins(recipe.cook_time_mins)[0])
+  const [cookMins, setCookMins] = useState(minsToHoursAndMins(recipe.cook_time_mins)[1])
   const [tags, setTags] = useState((recipe.tags || []).join(', '))
   const [sourceUrl, setSourceUrl] = useState(recipe.source_url || '')
   const [ingredients, setIngredients] = useState((recipe.ingredients || []).join('\n'))
@@ -49,6 +87,11 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
     setSaving(true)
     setError('')
 
+    const toMins = (h: string, m: string) => {
+      const total = (parseInt(h) || 0) * 60 + (parseInt(m) || 0)
+      return total > 0 ? total : null
+    }
+
     const updates = {
       title: title.trim(),
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -58,6 +101,8 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
       notes: notes.trim() || null,
       photo_url: photoUrl.trim() || null,
       portions: portions ? parseInt(portions) : null,
+      prep_time_mins: toMins(prepHours, prepMins),
+      cook_time_mins: toMins(cookHours, cookMins),
     }
 
     const { data, error: err } = await supabase
@@ -107,6 +152,11 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
               <label className={labelClass}>source URL</label>
               <input type="text" value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://..." className={inputClass} />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <TimeInput label="prep time" hours={prepHours} mins={prepMins} onHoursChange={setPrepHours} onMinsChange={setPrepMins} />
+            <TimeInput label="cook time" hours={cookHours} mins={cookMins} onHoursChange={setCookHours} onMinsChange={setCookMins} />
           </div>
 
           <div>

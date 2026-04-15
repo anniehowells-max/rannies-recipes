@@ -91,6 +91,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     )
   }
 
+  function formatTime(mins: number): string {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    if (h === 0) return `${m}m`
+    if (m === 0) return `${h}h`
+    return `${h}h ${m}m`
+  }
+
   function formatDate(str: string) {
     return new Date(str).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   }
@@ -116,6 +124,22 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
         <div className="bg-white rounded-xl px-5 py-4 mb-4">
           <h1 className="font-serif text-3xl font-medium mb-3">{recipe.title}</h1>
+          {(recipe.prep_time_mins || recipe.cook_time_mins) && (
+            <div className="flex gap-4 mb-3">
+              {recipe.prep_time_mins && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-stone-400">prep</span>
+                  <span className="text-sm text-stone-600">{formatTime(recipe.prep_time_mins)}</span>
+                </div>
+              )}
+              {recipe.cook_time_mins && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-stone-400">cook</span>
+                  <span className="text-sm text-stone-600">{formatTime(recipe.cook_time_mins)}</span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex gap-1 mb-3">
             {[1, 2, 3, 4, 5].map(star => {
               const filled = star <= (hoverRating ?? rating ?? 0)
