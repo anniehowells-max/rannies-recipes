@@ -47,11 +47,11 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
     load()
   }, [refreshKey])
 
-  const allTags = Array.from(new Set(recipes.flatMap(r => r.tags || [])))
+  const allTags = Array.from(new Set(recipes.flatMap(r => r.tags || []))).sort()
 
   const filtered = recipes.filter(r => {
     const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
-    const matchTag = activeTags.length === 0 || activeTags.some(t => (r.tags || []).includes(t))
+    const matchTag = activeTags.length === 0 || activeTags.every(t => (r.tags || []).includes(t))
     return matchSearch && matchTag
   })
 
@@ -87,17 +87,19 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
           <div className="relative mb-6" ref={dropdownRef}>
             <button
               onClick={() => setTagDropdownOpen(o => !o)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm border transition-colors ${
+              className={`font-ui uppercase tracking-wider w-full flex items-center gap-2 px-5 py-3 rounded-full text-sm border transition-colors ${
                 activeTags.length > 0
                   ? 'bg-stone-50 border-stone-900 text-stone-900'
                   : 'bg-white border-stone-200 text-stone-400 hover:border-stone-300'
               }`}
             >
               {activeTags.length > 0 ? `${activeTags.length} tag${activeTags.length > 1 ? 's' : ''} selected` : 'filter by tag'}
-              <span className="text-xs">{tagDropdownOpen ? '▲' : '▼'}</span>
+              <svg viewBox="0 0 24 24" className={`w-3.5 h-3.5 ml-auto transition-transform duration-200 ${tagDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             {tagDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-stone-200 rounded-xl shadow-lg z-10 min-w-56 py-1">
+              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-stone-200 rounded-xl shadow-lg z-10 py-1">
                 {activeTags.length > 0 && (
                   <>
                     <button
@@ -145,7 +147,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
               className="cursor-pointer group border-b border-r border-stone-200">
               <div className="aspect-[4/3] bg-stone-50 overflow-hidden relative">
                 {recipe.photo_url
-                  ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
                 }
                 {!cookCounts[recipe.id] && (
@@ -153,7 +155,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
                 )}
               </div>
               <div className="p-4 flex flex-col gap-2 min-h-36">
-                <p className="font-serif text-base font-medium leading-snug group-hover:text-stone-500 transition-colors">{recipe.title}</p>
+                <p className="font-serif text-base font-medium leading-snug">{recipe.title}</p>
                 {(recipe.rating != null || cookCounts[recipe.id] > 0) && (
                   <div className="flex items-center gap-2">
                     {cookCounts[recipe.id] > 0 && (
