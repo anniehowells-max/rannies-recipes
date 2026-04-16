@@ -156,6 +156,21 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
               </div>
               <div className="p-4 flex flex-col gap-2 min-h-36">
                 <p className="font-serif text-base font-medium leading-snug">{recipe.title}</p>
+                {((recipe.prep_time_mins ?? 0) + (recipe.cook_time_mins ?? 0)) > 0 && (() => {
+                  const total = (recipe.prep_time_mins ?? 0) + (recipe.cook_time_mins ?? 0)
+                  const display = total > 59
+                    ? `${Math.floor(total / 60)} h${total % 60 > 0 ? ` ${total % 60} mins` : ''}`
+                    : `${total} mins`
+                  return (
+                    <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400 flex items-center gap-1">
+                      <svg viewBox="0 0 24 24" className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      {display}
+                    </span>
+                  )
+                })()}
                 {(recipe.rating != null || cookCounts[recipe.id] > 0) && (
                   <div className="flex items-center gap-2">
                     {cookCounts[recipe.id] > 0 && (

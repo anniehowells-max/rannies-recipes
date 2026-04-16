@@ -47,14 +47,38 @@ function extractFormDescriptors(s: string): { name: string; descriptors: string 
 function stripPrepInstructions(name: string): string {
   let s = name.trim()
 
-  const adverbs = '(?:very\\s+)?(?:finely|roughly|coarsely|thinly|thickly|lightly|loosely|well)?\\s*'
-  const prepWords = '(?:chopped|diced|sliced|minced|grated|shredded|crushed|peeled|pitted|toasted|roasted|drained|rinsed|trimmed|halved|quartered|cubed|crumbled|beaten|whisked|melted|softened|sifted|zested|juiced|squeezed|torn|bruised|pressed|smashed|mashed|blended|pureed|ground|cut)'
+  const adverbs = '(?:very\\s+)?(?:finely|roughly|coarsely|thinly|thickly|lightly|loosely|freshly|well)?\\s*'
+  const prepWords = 'chopped|diced|sliced|minced|grated|shredded|crushed|peeled|pitted|toasted|roasted|drained|rinsed|trimmed|halved|quartered|cubed|crumbled|beaten|whisked|melted|softened|sifted|zested|juiced|squeezed|torn|bruised|pressed|smashed|mashed|blended|pureed|ground|cut|separated|removed|deseeded|seeded|washed|patted'
 
-  // Remove trailing comma-separated prep: "garlic, finely minced" → "garlic"
-  s = s.replace(new RegExp(`,\\s*${adverbs}${prepWords}\\s*$`, 'i'), '').trim()
+  // Remove state/temperature phrases
+  s = s.replace(/,?\s*at room temperature/gi, '').trim()
+
+  // Remove trailing comma-separated clauses that contain a prep word — loop to handle multiple
+  const trailingClause = new RegExp(`,\\s*[^,]*\\b(?:${prepWords})\\b[^,]*$`, 'i')
+  let prev = ''
+  while (prev !== s) {
+    prev = s
+    s = s.replace(trailingClause, '').trim()
+  }
+
+  // Strip inline "adverb + prepWord" (e.g. "freshly ground" in "salt and freshly ground black pepper")
+  s = s.replace(new RegExp(`\\b(?:finely|roughly|coarsely|thinly|thickly|lightly|loosely|freshly|well)\\s+(?:${prepWords})\\b\\s*`, 'gi'), '').trim()
+  s = s.replace(/\s{2,}/g, ' ').replace(/\s+and\s*$/i, '').trim()
 
   // Remove leading prep adverb + verb: "finely grated garlic" → "garlic"
-  s = s.replace(new RegExp(`^${adverbs}${prepWords}\\s+`, 'i'), '').trim()
+  s = s.replace(new RegExp(`^${adverbs}(?:${prepWords})\\s+`, 'i'), '').trim()
+
+  // Remove leading size/quality adjectives: "Large avocados" → "avocados"
+  s = s.replace(/^(?:large|small|medium|big|thick|thin|extra-large|extra large|free[-\s]range)\s+/i, '').trim()
+
+  // Remove orphaned unit-as-descriptor words: "slices bread" → "bread"
+  s = s.replace(/^(?:slices?|pieces?|portions?|chunks?)\s+(?:of\s+)?/i, '').trim()
+
+  // Remove leading amount phrases: "a squeeze of lemon juice" → "lemon juice"
+  s = s.replace(/^(?:a\s+)?(?:squeeze|drizzle|splash|dash|pinch|knob|dollop|drop|handful|sprig|bunch|strip|rasher|wedge|sheet)\s+of\s+/i, '').trim()
+
+  // Remove leading alternative quantity: "/1¾oz" left over from "20g/1¾oz ingredient"
+  s = s.replace(/^\/\s*[\d¼½¾⅓⅔⅛⅜⅝⅞]+(?:\s*(?:tbsp|tsp|oz|g|mg|ml|kg|lbs?|lb|cups?))?\s*/i, '').trim()
 
   return s || name.trim()
 }
@@ -86,17 +110,50 @@ function reorderIngredient(ingredient: string): string {
   return buildName(s)
 }
 
+// Normalize a display name for matching: lowercase and strip trailing 's' for plural comparison
+function normalizeForMatch(name: string): string {
+  return name.toLowerCase().trim().replace(/s$/i, '')
+}
+
+// Parse a formatted grocery item text into name and numeric quantity, if possible
+function parseFormattedItem(text: string): { name: string; qty: number } | null {
+  const m = text.match(/^(.+?)\s*\((\d+(?:\.\d+)?)\)\s*$/)
+  if (!m) return null
+  return { name: m[1].trim(), qty: parseFloat(m[2]) }
+}
+
 export function addIngredientsToList(ingredients: string[]) {
   const current = loadGroceryList()
-  const newItems: GroceryItem[] = ingredients.map(raw => {
+
+  for (const raw of ingredients) {
     const text = reorderIngredient(raw)
-    return {
-      id: crypto.randomUUID(),
-      text: text.charAt(0).toUpperCase() + text.slice(1),
-      checked: false,
+    const formatted = text.charAt(0).toUpperCase() + text.slice(1)
+    const parsed = parseFormattedItem(formatted)
+
+    // Try to merge with an existing unchecked item of the same ingredient
+    if (parsed) {
+      const existingIdx = current.findIndex(item => {
+        if (item.checked) return false
+        const existing = parseFormattedItem(item.text)
+        if (!existing) return false
+        return normalizeForMatch(existing.name) === normalizeForMatch(parsed.name)
+      })
+
+      if (existingIdx !== -1) {
+        const existing = parseFormattedItem(current[existingIdx].text)!
+        const total = existing.qty + parsed.qty
+        current[existingIdx] = {
+          ...current[existingIdx],
+          text: `${existing.name} (${total % 1 === 0 ? total : total})`,
+        }
+        continue
+      }
     }
-  })
-  saveGroceryList([...current, ...newItems])
+
+    current.push({ id: crypto.randomUUID(), text: formatted, checked: false })
+  }
+
+  saveGroceryList(current)
 }
 
 type Props = {
