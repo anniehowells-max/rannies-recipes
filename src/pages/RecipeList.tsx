@@ -3,11 +3,10 @@ import { supabase, type Recipe } from '../lib/supabase'
 
 type Props = {
   onSelect: (recipe: Recipe) => void
-  onAdd: () => void
   refreshKey: number
 }
 
-export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
+export default function RecipeList({ onSelect, refreshKey }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -61,7 +60,7 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-32">
 
       {/* Header */}
       <div className="border-b border-stone-100">
@@ -69,9 +68,6 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
           <h1 className="font-serif text-4xl font-medium tracking-tight">
             Rannie's <span className="italic text-stone-900">Recipes</span>
           </h1>
-          <button onClick={onAdd} className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white text-sm rounded-lg transition-colors whitespace-nowrap flex-shrink-0">
-            + add recipe
-          </button>
         </div>
       </div>
 
@@ -154,14 +150,27 @@ export default function RecipeList({ onSelect, onAdd, refreshKey }: Props) {
                 }
               </div>
               <div className="p-4">
-                <p className="font-serif text-base font-medium leading-snug mb-1.5 group-hover:text-stone-500 transition-colors">{recipe.title}</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {(recipe.tags || []).slice(0, 2).map(tag => (
-                    <span key={tag} className="text-[10px] tracking-wider uppercase text-stone-400">{tag}</span>
+                <p className="font-serif text-base font-medium leading-snug mb-1 group-hover:text-stone-500 transition-colors">{recipe.title}</p>
+                {recipe.rating != null && (
+                  <div className="flex gap-0.5 mb-1.5">
+                    {[1, 2, 3, 4, 5].map(star => {
+                      const filled = star <= (recipe.rating as number)
+                      return (
+                        <svg key={star} viewBox="0 0 24 24" className="w-2.5 h-2.5">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                            fill={filled ? '#1c1917' : 'none'} stroke={filled ? '#1c1917' : '#d6d3d1'} strokeWidth="1.5" />
+                        </svg>
+                      )
+                    })}
+                  </div>
+                )}
+                <div className="border-t border-stone-100 pt-2 mt-3 flex items-center gap-2 flex-wrap">
+                  {(recipe.tags || []).map(tag => (
+                    <span key={tag} className="font-ui text-[10px] tracking-wider uppercase text-stone-400">{tag}</span>
                   ))}
-                  {(recipe.tags || []).length > 1 && cookCounts[recipe.id] && <span className="text-stone-200">·</span>}
+                  {(recipe.tags || []).length > 0 && cookCounts[recipe.id] && <span className="text-stone-200">·</span>}
                   {cookCounts[recipe.id] && (
-                    <span className="text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]}×</span>
+                    <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]}×</span>
                   )}
                 </div>
               </div>

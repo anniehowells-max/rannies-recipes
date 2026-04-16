@@ -4,9 +4,11 @@ import RecipeList from './pages/RecipeList'
 import RecipeDetail from './pages/RecipeDetail'
 import AddRecipe from './pages/AddRecipe'
 import EditRecipe from './pages/EditRecipe'
+import GroceryList from './pages/GroceryList'
+import BottomNav from './components/BottomNav'
 import { type Recipe } from './lib/supabase'
 
-type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery'
 
 export default function App() {
   const isAuthed = sessionStorage.getItem('kitchen-auth') === 'true'
@@ -21,45 +23,56 @@ export default function App() {
     setScreen('list')
   }
 
-  if (screen === 'login') {
-    return <Login onLogin={() => setScreen('list')} />
-  }
-
-  if (screen === 'detail' && selectedRecipe) {
+  function renderScreen() {
+    if (screen === 'login') {
+      return <Login onLogin={() => setScreen('list')} />
+    }
+    if (screen === 'detail' && selectedRecipe) {
+      return (
+        <RecipeDetail
+          recipe={selectedRecipe}
+          onBack={() => setScreen('list')}
+          onDelete={refresh}
+          onEdit={() => setScreen('edit')}
+        />
+      )
+    }
+    if (screen === 'edit' && selectedRecipe) {
+      return (
+        <EditRecipe
+          recipe={selectedRecipe}
+          onBack={() => setScreen('detail')}
+          onSaved={updated => { setSelectedRecipe(updated); setScreen('detail') }}
+        />
+      )
+    }
+    if (screen === 'add') {
+      return <AddRecipe onBack={() => setScreen('list')} onSaved={refresh} />
+    }
+    if (screen === 'grocery') {
+      return <GroceryList onBack={() => setScreen('list')} />
+    }
     return (
-      <RecipeDetail
-        recipe={selectedRecipe}
-        onBack={() => setScreen('list')}
-        onDelete={refresh}
-        onEdit={() => setScreen('edit')}
-      />
-    )
-  }
-
-  if (screen === 'edit' && selectedRecipe) {
-    return (
-      <EditRecipe
-        recipe={selectedRecipe}
-        onBack={() => setScreen('detail')}
-        onSaved={updated => { setSelectedRecipe(updated); setScreen('detail') }}
-      />
-    )
-  }
-
-  if (screen === 'add') {
-    return (
-      <AddRecipe
-        onBack={() => setScreen('list')}
-        onSaved={refresh}
+      <RecipeList
+        onSelect={recipe => { setSelectedRecipe(recipe); setScreen('detail') }}
+        refreshKey={refreshKey}
       />
     )
   }
 
   return (
-    <RecipeList
-      onSelect={recipe => { setSelectedRecipe(recipe); setScreen('detail') }}
-      onAdd={() => setScreen('add')}
-      refreshKey={refreshKey}
-    />
+    <>
+      {renderScreen()}
+      {screen !== 'login' && (
+        <BottomNav
+          screen={screen}
+          onNavigate={s => {
+            if (s === 'add') setScreen('add')
+            else if (s === 'grocery') setScreen('grocery')
+            else setScreen('list')
+          }}
+        />
+      )}
+    </>
   )
 }

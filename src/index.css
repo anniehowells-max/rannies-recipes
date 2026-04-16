@@ -3,7 +3,14 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-stone-50 text-stone-800 font-sans;
+  html, body {
+    font-family: 'Lora', serif;
+    @apply bg-stone-50 text-stone-800;
+  }
+}
+
+@layer utilities {
+  .font-ui {
+    font-family: 'DM Sans', sans-serif;
   }
 }

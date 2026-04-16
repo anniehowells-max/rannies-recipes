@@ -147,7 +147,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
   const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-base"
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-50 pb-32">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm mb-6 flex items-center gap-1 transition-colors">
           ← back to recipes

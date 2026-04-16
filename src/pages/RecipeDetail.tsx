@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, type Recipe, type CookEntry } from '../lib/supabase'
+import { addIngredientsToList } from './GroceryList'
 
 type Props = {
   recipe: Recipe
@@ -17,6 +18,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [logAuthor, setLogAuthor] = useState('')
   const [logError, setLogError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [addedToGrocery, setAddedToGrocery] = useState(false)
 
   useEffect(() => {
     supabase
@@ -104,7 +106,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-32">
 
       {/* Top nav */}
       <div className="border-b border-stone-100">
@@ -138,14 +140,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               <div className="flex items-center gap-4">
                 {recipe.prep_time_mins && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] tracking-[0.15em] uppercase text-stone-400">prep</span>
+                    <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">prep</span>
                     <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.prep_time_mins)}</span>
                   </div>
                 )}
                 {recipe.prep_time_mins && recipe.cook_time_mins && <span className="text-stone-200">|</span>}
                 {recipe.cook_time_mins && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] tracking-[0.15em] uppercase text-stone-400">cook</span>
+                    <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">cook</span>
                     <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.cook_time_mins)}</span>
                   </div>
                 )}
@@ -172,7 +174,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           {(recipe.tags || []).length > 0 && (
             <div className="flex gap-2 flex-wrap mb-3">
               {(recipe.tags || []).map(tag => (
-                <span key={tag} className="text-xs bg-stone-50 border border-stone-900 text-stone-900 px-3 py-1 rounded-full">{tag}</span>
+                <span key={tag} className="font-ui text-xs bg-stone-50 border border-stone-900 text-stone-900 px-3 py-1 rounded-full">{tag}</span>
               ))}
             </div>
           )}
@@ -190,7 +192,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         {/* Ingredients */}
         <div className="py-8 px-6 border-b-2 border-stone-200">
           <div className="flex items-center justify-between mb-5">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
+            <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
             {recipe.portions && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
@@ -204,7 +206,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               </div>
             )}
           </div>
-          <ul className="space-y-2.5">
+          <ul className="space-y-2.5 mb-5">
             {(recipe.ingredients || []).map((ing, i) => (
               <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                 <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
@@ -212,15 +214,25 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               </li>
             ))}
           </ul>
+          <button
+            onClick={() => {
+              addIngredientsToList((recipe.ingredients || []).map(scaleIngredient))
+              setAddedToGrocery(true)
+              setTimeout(() => setAddedToGrocery(false), 2000)
+            }}
+            className="text-sm text-stone-500 hover:text-stone-900 transition-colors"
+          >
+            {addedToGrocery ? '✓ added to grocery list' : '+ add to grocery list'}
+          </button>
         </div>
 
         {/* Method */}
         <div className="py-8 px-6 border-b-2 border-stone-200">
-          <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">method</p>
+          <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">method</p>
           <ol className="space-y-5">
             {(recipe.steps || []).map((step, i) => (
               <li key={i} className="flex items-start gap-4 text-base text-stone-700">
-                <span className="text-[10px] tracking-widest text-stone-300 font-semibold flex-shrink-0 mt-1.5 w-4">
+                <span className="font-ui text-[10px] tracking-widest text-stone-300 font-semibold flex-shrink-0 mt-1.5 w-4">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="leading-relaxed">{step}</span>
@@ -232,14 +244,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         {/* Notes */}
         {recipe.notes && (
           <div className="py-8 px-6 border-b-2 border-stone-200">
-            <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">notes</p>
+            <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">notes</p>
             <p className="text-base text-stone-500 italic leading-relaxed">{recipe.notes}</p>
           </div>
         )}
 
         {/* Cooking log */}
         <div className="py-8 pb-16 px-6">
-          <p className="text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">cooking log</p>
+          <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">cooking log</p>
 
           <div className="flex flex-col gap-2 mb-6">
             <div className="flex gap-2">

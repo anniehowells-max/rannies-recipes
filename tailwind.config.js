@@ -4,8 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'sans-serif'],
+        sans: ['Lora', 'serif'],
         serif: ['Space Grotesk', 'sans-serif'],
+        ui: ['DM Sans', 'sans-serif'],
       },
       colors: {
         amber: {
