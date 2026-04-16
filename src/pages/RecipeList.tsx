@@ -143,11 +143,14 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
           {filtered.map(recipe => (
             <div key={recipe.id} onClick={() => onSelect(recipe)}
               className="cursor-pointer group border-b border-r border-stone-200">
-              <div className="aspect-[4/3] bg-stone-50 overflow-hidden">
+              <div className="aspect-[4/3] bg-stone-50 overflow-hidden relative">
                 {recipe.photo_url
                   ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
                 }
+                {!cookCounts[recipe.id] && (
+                  <span className="font-ui absolute top-2 left-2 bg-stone-900 text-white text-[10px] tracking-widest uppercase px-2 py-1 rounded-full">new</span>
+                )}
               </div>
               <div className="p-4">
                 <p className="font-serif text-base font-medium leading-snug mb-1 group-hover:text-stone-500 transition-colors">{recipe.title}</p>
@@ -169,7 +172,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
                     <span key={tag} className="font-ui text-[10px] tracking-wider uppercase text-stone-400">{tag}</span>
                   ))}
                   {(recipe.tags || []).length > 0 && cookCounts[recipe.id] && <span className="text-stone-200">·</span>}
-                  {cookCounts[recipe.id] && (
+                  {cookCounts[recipe.id] > 0 && (
                     <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]}×</span>
                   )}
                 </div>
