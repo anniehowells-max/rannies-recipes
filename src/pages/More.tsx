@@ -185,14 +185,23 @@ export default function More() {
         return
       }
 
-      // Crouton export format (.crumb files are JSON)
-      const crumbFiles = zip.file(/\.crumb$/)
+      // Crouton export format (.crumb files are JSON, possibly gzip-compressed)
+      const crumbFiles = zip.file(/\.crumb$/i)
       if (crumbFiles.length > 0) {
         const toInsert: Record<string, unknown>[] = []
+        const parseErrors: string[] = []
         for (const crumbFile of crumbFiles) {
           try {
-            const raw = JSON.parse(await crumbFile.async('text'))
-            console.log(raw)
+            // Try plain text first; fall back to gzip if it fails
+            let text: string
+            try {
+              text = await crumbFile.async('text')
+              JSON.parse(text) // validate — throws if binary garbage
+            } catch {
+              const compressed = await crumbFile.async('uint8array')
+              text = await gunzip(compressed)
+            }
+            const raw = JSON.parse(text)
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
@@ -211,10 +220,13 @@ export default function More() {
             if (raw.source) recipe.source_url = String(raw.source)
             toInsert.push(recipe)
           } catch (err) {
-            console.error('Failed to parse crumb file:', crumbFile.name, err)
+            parseErrors.push(`${crumbFile.name}: ${(err as Error).message}`)
           }
         }
-        if (toInsert.length === 0) throw new Error('No valid recipes found in the Crouton export.')
+        if (toInsert.length === 0) {
+          const detail = parseErrors.length > 0 ? ` Errors: ${parseErrors.join('; ')}` : ''
+          throw new Error(`Found ${crumbFiles.length} .crumb file${crumbFiles.length === 1 ? '' : 's'} but could not parse any.${detail}`)
+        }
         const { error } = await supabase.from('recipes').insert(toInsert)
         if (error) throw new Error(error.message)
         setZipResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} from Crouton successfully.` })
@@ -223,7 +235,9 @@ export default function More() {
         return
       }
 
-      throw new Error('Unrecognised ZIP format — expected a backup from this app, a Crouton export, or a Paprika export.')
+      // Show all top-level file names to help diagnose unrecognised ZIPs
+      const fileList = Object.keys(zip.files).slice(0, 10).join(', ')
+      throw new Error(`Unrecognised ZIP format. Files found: ${fileList || '(none)'}`)
     } catch (err) {
       setZipResult({ ok: false, message: (err as Error).message })
     }
