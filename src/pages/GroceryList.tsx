@@ -16,6 +16,7 @@ export function loadGroceryList(): GroceryItem[] {
 
 export function saveGroceryList(items: GroceryItem[]) {
   localStorage.setItem('kitchen-grocery-list', JSON.stringify(items))
+  window.dispatchEvent(new Event('grocery-list-updated'))
 }
 
 const FORM_ADJ = 'boneless|skinless|bone-in|skin-on|deveined'

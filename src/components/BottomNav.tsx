@@ -12,7 +12,10 @@ export default function BottomNav({ screen, onNavigate }: Props) {
   const [groceryCount, setGroceryCount] = useState(0)
 
   useEffect(() => {
-    setGroceryCount(loadGroceryList().filter(i => !i.checked).length)
+    const update = () => setGroceryCount(loadGroceryList().filter(i => !i.checked).length)
+    update()
+    window.addEventListener('grocery-list-updated', update)
+    return () => window.removeEventListener('grocery-list-updated', update)
   }, [screen])
 
   const onRecipes = screen === 'list' || screen === 'detail' || screen === 'edit'
