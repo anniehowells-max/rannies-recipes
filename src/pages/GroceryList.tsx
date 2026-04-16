@@ -18,13 +18,83 @@ export function saveGroceryList(items: GroceryItem[]) {
   localStorage.setItem('kitchen-grocery-list', JSON.stringify(items))
 }
 
+const FORM_ADJ = 'boneless|skinless|bone-in|skin-on|deveined'
+
+// Extracts form descriptors (boneless, skinless etc.) from a name, returning
+// the cleaned name and a formatted descriptor string to append.
+function extractFormDescriptors(s: string): { name: string; descriptors: string } {
+  const re = new RegExp(`\\b(${FORM_ADJ})\\b`, 'gi')
+  const found: string[] = []
+  let m
+  while ((m = re.exec(s)) !== null) found.push(m[1].toLowerCase())
+  if (found.length === 0) return { name: s, descriptors: '' }
+
+  // Remove them from the string — leading, trailing, and inline
+  let cleaned = s
+  cleaned = cleaned.replace(new RegExp(`^(?:\\b(?:${FORM_ADJ})\\b,?\\s*)+`, 'i'), '').trim()
+  cleaned = cleaned.replace(new RegExp(`,\\s*(?:(?:\\b(?:${FORM_ADJ})\\b)(?:\\s*(?:and|,)\\s*)?)+\\s*$`, 'i'), '').trim()
+  cleaned = cleaned.replace(new RegExp(`\\b(?:${FORM_ADJ})\\b,?\\s*`, 'gi'), '').trim()
+
+  const unique = [...new Set(found)]
+  const descriptors = unique.length === 1
+    ? unique[0]
+    : unique.slice(0, -1).join(', ') + ' and ' + unique[unique.length - 1]
+
+  return { name: cleaned, descriptors }
+}
+
+function stripPrepInstructions(name: string): string {
+  let s = name.trim()
+
+  const adverbs = '(?:very\\s+)?(?:finely|roughly|coarsely|thinly|thickly|lightly|loosely|well)?\\s*'
+  const prepWords = '(?:chopped|diced|sliced|minced|grated|shredded|crushed|peeled|pitted|toasted|roasted|drained|rinsed|trimmed|halved|quartered|cubed|crumbled|beaten|whisked|melted|softened|sifted|zested|juiced|squeezed|torn|bruised|pressed|smashed|mashed|blended|pureed|ground|cut)'
+
+  // Remove trailing comma-separated prep: "garlic, finely minced" → "garlic"
+  s = s.replace(new RegExp(`,\\s*${adverbs}${prepWords}\\s*$`, 'i'), '').trim()
+
+  // Remove leading prep adverb + verb: "finely grated garlic" → "garlic"
+  s = s.replace(new RegExp(`^${adverbs}${prepWords}\\s+`, 'i'), '').trim()
+
+  return s || name.trim()
+}
+
+function reorderIngredient(ingredient: string): string {
+  const s = ingredient.trim()
+
+  const unicodeFrac = '[½¼¾⅓⅔⅛⅜⅝⅞]'
+  const singleNum = `(?:\\d+\\s*${unicodeFrac}|\\d+(?:[/.]\\d+)?|${unicodeFrac})`
+  const fullQty = `(?:${singleNum})(?:\\s*(?:to|-)\\s*${singleNum})?`
+  const units = '(?:tbsp|tablespoons?|tsp|teaspoons?|cups?|fl\\.?\\s*oz|ounces?|oz|pounds?|lbs?|lb|kg|g|mg|ml|cl|dl|litres?|liters?|l|pints?|quarts?|gallons?|handfuls?|pinch(?:es)?|dash(?:es)?|sprigs?|bunch(?:es)?|slices?|cans?|tins?|packs?|packets?|jars?|bottles?|heads?|cloves?|sticks?|pieces?|sheets?)'
+
+  function buildName(raw: string): string {
+    const withoutOf = raw.replace(/^of\s+/i, '').trim()
+    const { name, descriptors } = extractFormDescriptors(withoutOf)
+    const clean = stripPrepInstructions(name)
+    return descriptors ? `${clean}, ${descriptors}` : clean
+  }
+
+  // Try: quantity + unit + name
+  let match = s.match(new RegExp(`^(${fullQty}\\s*${units}\\b)\\s*(.+)$`, 'i'))
+  if (match) return `${buildName(match[2])} (${match[1].trim()})`
+
+  // Try: quantity only + name
+  match = s.match(new RegExp(`^(${fullQty})\\s+(.+)$`))
+  if (match) return `${buildName(match[2])} (${match[1].trim()})`
+
+  // No quantity
+  return buildName(s)
+}
+
 export function addIngredientsToList(ingredients: string[]) {
   const current = loadGroceryList()
-  const newItems: GroceryItem[] = ingredients.map(text => ({
-    id: crypto.randomUUID(),
-    text,
-    checked: false,
-  }))
+  const newItems: GroceryItem[] = ingredients.map(raw => {
+    const text = reorderIngredient(raw)
+    return {
+      id: crypto.randomUUID(),
+      text: text.charAt(0).toUpperCase() + text.slice(1),
+      checked: false,
+    }
+  })
   saveGroceryList([...current, ...newItems])
 }
 
