@@ -210,8 +210,8 @@ export default function More() {
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
             toInsert.push(recipe)
-          } catch {
-            // skip malformed files
+          } catch (err) {
+            console.error('Failed to parse crumb file:', crumbFile.name, err)
           }
         }
         if (toInsert.length === 0) throw new Error('No valid recipes found in the Crouton export.')
