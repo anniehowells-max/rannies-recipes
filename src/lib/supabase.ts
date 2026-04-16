@@ -19,6 +19,10 @@ export type Recipe = {
   portions: number | null
   prep_time_mins: number | null
   cook_time_mins: number | null
+  calories_per_portion: number | null
+  protein_g: number | null
+  carbs_g: number | null
+  fat_g: number | null
   created_at: string
   cook_log?: CookEntry[]
 }

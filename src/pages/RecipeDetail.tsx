@@ -19,6 +19,12 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [logError, setLogError] = useState('')
   const [saving, setSaving] = useState(false)
   const [addedToGrocery, setAddedToGrocery] = useState(false)
+  const [addingLog, setAddingLog] = useState(false)
+  const [logDate, setLogDate] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editNote, setEditNote] = useState('')
+  const [editAuthor, setEditAuthor] = useState('')
+  const [editDate, setEditDate] = useState('')
 
   useEffect(() => {
     supabase
@@ -35,15 +41,24 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     setLogError('')
     const { data, error } = await supabase
       .from('cook_log')
-      .insert({ recipe_id: recipe.id, note: logNote.trim(), cooked_by: logAuthor.trim() || null })
+      .insert({
+        recipe_id: recipe.id,
+        note: logNote.trim(),
+        cooked_by: logAuthor.trim() || null,
+        cooked_at: logDate || undefined,
+      })
       .select()
       .single()
     if (error) {
       setLogError('couldn\'t save — ' + error.message)
     } else if (data) {
-      setLog(prev => [data, ...prev])
+      setLog(prev => [data, ...prev].sort(
+        (a, b) => new Date(b.cooked_at).getTime() - new Date(a.cooked_at).getTime()
+      ))
       setLogNote('')
       setLogAuthor('')
+      setLogDate('')
+      setAddingLog(false)
     }
     setSaving(false)
   }
@@ -52,6 +67,30 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     if (!confirm('Delete this log entry? This can\'t be undone.')) return
     await supabase.from('cook_log').delete().eq('id', id)
     setLog(prev => prev.filter(e => e.id !== id))
+  }
+
+  function startEdit(entry: CookEntry) {
+    setEditingId(entry.id)
+    setEditNote(entry.note || '')
+    setEditAuthor(entry.cooked_by || '')
+    setEditDate(entry.cooked_at.slice(0, 10))
+  }
+
+  async function saveEdit(id: string) {
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('cook_log')
+      .update({ note: editNote.trim() || null, cooked_by: editAuthor.trim() || null, cooked_at: editDate })
+      .eq('id', id)
+      .select()
+      .single()
+    if (!error && data) {
+      setLog(prev => prev.map(e => e.id === id ? data : e).sort(
+        (a, b) => new Date(b.cooked_at).getTime() - new Date(a.cooked_at).getTime()
+      ))
+      setEditingId(null)
+    }
+    setSaving(false)
   }
 
   async function handleRate(stars: number) {
@@ -267,45 +306,115 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           </div>
         )}
 
+        {/* Nutrition */}
+        {(recipe.calories_per_portion || recipe.protein_g || recipe.carbs_g || recipe.fat_g) && (() => {
+          const scale = recipe.portions ? portions / recipe.portions : 1
+          const round = (n: number | null) => n != null ? Math.round(n * scale) : null
+          const stats = [
+            { label: 'calories', value: round(recipe.calories_per_portion), unit: 'kcal' },
+            { label: 'protein', value: round(recipe.protein_g), unit: 'g' },
+            { label: 'carbs', value: round(recipe.carbs_g), unit: 'g' },
+            { label: 'fat', value: round(recipe.fat_g), unit: 'g' },
+          ].filter(s => s.value != null)
+          return (
+            <div className="py-8 px-6 border-b-2 border-stone-200">
+              <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">
+                nutrition per portion{recipe.portions && portions !== recipe.portions ? ` (scaled)` : ''}
+              </p>
+              <div className="grid grid-cols-4 gap-4">
+                {stats.map(({ label, value, unit }) => (
+                  <div key={label} className="text-center">
+                    <p className="font-ui text-xl font-semibold text-stone-800">{value}<span className="text-xs text-stone-400 ml-0.5">{unit}</span></p>
+                    <p className="font-ui text-[10px] tracking-wider uppercase text-stone-400 mt-1">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Cooking log */}
         <div className="py-8 pb-16 px-6">
           <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">cooking log</p>
 
-          <div className="flex flex-col gap-2 mb-6">
-            <div className="flex gap-2">
-              <input type="text" value={logNote} onChange={e => setLogNote(e.target.value)}
-                placeholder="add a note about tonight's cook..."
-                className="flex-1 px-3 py-3 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
-              <input type="text" value={logAuthor} onChange={e => setLogAuthor(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addLogEntry() }}
-                placeholder="who cooked?"
-                className="w-32 px-3 py-3 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+          {addingLog ? (
+            <div className="flex flex-col gap-2 mb-6">
+              <div className="flex gap-2">
+                <input type="text" value={logNote} onChange={e => setLogNote(e.target.value)}
+                  placeholder="add a note about tonight's cook..."
+                  className="flex-1 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                <input type="text" value={logAuthor} onChange={e => setLogAuthor(e.target.value)}
+                  placeholder="who cooked?"
+                  className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+              </div>
+              <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)}
+                className="w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+              <div className="flex items-center gap-3 self-end">
+                {logError && <p className="text-red-400 text-xs">{logError}</p>}
+                <button onClick={() => { setAddingLog(false); setLogNote(''); setLogAuthor(''); setLogDate('') }}
+                  className="px-3 py-2 text-sm text-stone-400 hover:text-stone-600 transition-colors">
+                  cancel
+                </button>
+                <button onClick={addLogEntry} disabled={saving || !logNote.trim()}
+                  className="px-5 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
+                  save
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3 self-end">
-              {logError && <p className="text-red-400 text-xs">{logError}</p>}
-              <button onClick={addLogEntry} disabled={saving || !logNote.trim()}
-                className="px-5 py-3 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
-                log it
-              </button>
-            </div>
-          </div>
+          ) : (
+            <button onClick={() => setAddingLog(true)}
+              className="mb-6 text-sm text-stone-500 hover:text-stone-900 transition-colors">
+              + add new log entry
+            </button>
+          )}
 
           {log.length === 0 ? (
             <p className="text-stone-300 text-sm italic">no cooks logged yet</p>
           ) : (
             <div>
               {log.map((entry, i) => (
-                <div key={entry.id} className={`flex items-start gap-4 py-4 ${i < log.length - 1 ? 'border-b border-stone-100' : ''}`}>
-                  <div className="flex-1">
-                    <p className="text-xs text-stone-400 mb-1">
-                      {formatDate(entry.cooked_at)}{entry.cooked_by && <span className="text-stone-300"> · {entry.cooked_by}</span>}
-                    </p>
-                    {entry.note && <p className="text-base text-stone-600 italic">{entry.note}</p>}
-                  </div>
-                  <button onClick={() => deleteLogEntry(entry.id)}
-                    className="px-3 py-1.5 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
-                    delete
-                  </button>
+                <div key={entry.id} className={`py-4 ${i < log.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                  {editingId === entry.id ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)}
+                          placeholder="note..."
+                          className="flex-1 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                        <input type="text" value={editAuthor} onChange={e => setEditAuthor(e.target.value)}
+                          placeholder="who cooked?"
+                          className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                      </div>
+                      <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+                        className="w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                      <div className="flex gap-2 self-end">
+                        <button onClick={() => setEditingId(null)}
+                          className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                          cancel
+                        </button>
+                        <button onClick={() => saveEdit(entry.id)} disabled={saving}
+                          className="px-4 py-1.5 text-xs bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors">
+                          save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1">
+                        <p className="text-xs text-stone-400 mb-1">
+                          {formatDate(entry.cooked_at)}{entry.cooked_by && <span className="text-stone-300"> · {entry.cooked_by}</span>}
+                        </p>
+                        {entry.note && <p className="text-base text-stone-600 italic">{entry.note}</p>}
+                      </div>
+                      <button onClick={() => startEdit(entry)}
+                        className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-700 hover:bg-stone-50 rounded-lg transition-colors flex-shrink-0">
+                        edit
+                      </button>
+                      <button onClick={() => deleteLogEntry(entry.id)}
+                        className="px-3 py-1.5 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                        delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

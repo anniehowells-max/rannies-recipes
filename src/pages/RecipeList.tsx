@@ -12,6 +12,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
   const [search, setSearch] = useState('')
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
+  const [sort, setSort] = useState<'default' | 'alpha' | 'time'>('default')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [cookCounts, setCookCounts] = useState<Record<string, number>>({})
 
@@ -49,11 +50,21 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
 
   const allTags = Array.from(new Set(recipes.flatMap(r => r.tags || []))).sort()
 
-  const filtered = recipes.filter(r => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
-    const matchTag = activeTags.length === 0 || activeTags.every(t => (r.tags || []).includes(t))
-    return matchSearch && matchTag
-  })
+  const filtered = recipes
+    .filter(r => {
+      const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
+      const matchTag = activeTags.length === 0 || activeTags.every(t => (r.tags || []).includes(t))
+      return matchSearch && matchTag
+    })
+    .sort((a, b) => {
+      if (sort === 'alpha') return a.title.localeCompare(b.title)
+      if (sort === 'time') {
+        const aTime = (a.prep_time_mins ?? 0) + (a.cook_time_mins ?? 0)
+        const bTime = (b.prep_time_mins ?? 0) + (b.cook_time_mins ?? 0)
+        return aTime - bTime
+      }
+      return 0
+    })
 
   function toggleTag(tag: string) {
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -81,6 +92,24 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
           placeholder="search recipes..."
           className="w-full py-2.5 border-b border-stone-200 bg-transparent text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 transition-colors mb-5 text-sm"
         />
+
+        {/* Sort */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">sort</span>
+          {(['default', 'alpha', 'time'] as const).map(option => (
+            <button
+              key={option}
+              onClick={() => setSort(option)}
+              className={`font-ui text-[10px] tracking-wider uppercase px-3 py-1.5 rounded-full border transition-colors ${
+                sort === option
+                  ? 'bg-stone-900 border-stone-900 text-white'
+                  : 'border-stone-200 text-stone-400 hover:border-stone-300'
+              }`}
+            >
+              {option === 'default' ? 'recent' : option === 'alpha' ? 'a–z' : 'time'}
+            </button>
+          ))}
+        </div>
 
         {/* Tag filters */}
         {allTags.length > 0 && (

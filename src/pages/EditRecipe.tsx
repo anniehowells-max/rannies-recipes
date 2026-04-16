@@ -54,6 +54,10 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   const [ingredients, setIngredients] = useState((recipe.ingredients || []).join('\n'))
   const [toServe, setToServe] = useState((recipe.to_serve || []).join('\n'))
   const [steps, setSteps] = useState<string[]>(recipe.steps?.length ? recipe.steps : [''])
+  const [calories, setCalories] = useState(recipe.calories_per_portion ? String(recipe.calories_per_portion) : '')
+  const [protein, setProtein] = useState(recipe.protein_g ? String(recipe.protein_g) : '')
+  const [carbs, setCarbs] = useState(recipe.carbs_g ? String(recipe.carbs_g) : '')
+  const [fat, setFat] = useState(recipe.fat_g ? String(recipe.fat_g) : '')
   const [notes, setNotes] = useState(recipe.notes || '')
   const [photoUrl, setPhotoUrl] = useState(recipe.photo_url || '')
   const [photoPreview, setPhotoPreview] = useState(recipe.photo_url || '')
@@ -106,6 +110,10 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
       portions: portions ? parseInt(portions) : null,
       prep_time_mins: toMins(prepHours, prepMins),
       cook_time_mins: toMins(cookHours, cookMins),
+      calories_per_portion: calories ? parseInt(calories) : null,
+      protein_g: protein ? parseFloat(protein) : null,
+      carbs_g: carbs ? parseFloat(carbs) : null,
+      fat_g: fat ? parseFloat(fat) : null,
     }
 
     const { data, error: err } = await supabase
@@ -160,6 +168,31 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <TimeInput label="prep time" hours={prepHours} mins={prepMins} onHoursChange={setPrepHours} onMinsChange={setPrepMins} />
             <TimeInput label="cook time" hours={cookHours} mins={cookMins} onHoursChange={setCookHours} onMinsChange={setCookMins} />
+          </div>
+
+          <div>
+            <label className={labelClass}>nutrition per portion</label>
+            <div className="grid grid-cols-4 gap-3">
+              {([
+                { label: 'calories', value: calories, set: setCalories, placeholder: '450', unit: 'kcal' },
+                { label: 'protein', value: protein, set: setProtein, placeholder: '32', unit: 'g' },
+                { label: 'carbs', value: carbs, set: setCarbs, placeholder: '58', unit: 'g' },
+                { label: 'fat', value: fat, set: setFat, placeholder: '12', unit: 'g' },
+              ] as const).map(({ label, value, set, placeholder, unit }) => (
+                <div key={label}>
+                  <p className="text-xs text-stone-400 mb-1">{label}</p>
+                  <div className="relative">
+                    <input
+                      type="number" min="0" value={value}
+                      onChange={e => set(e.target.value)}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-base pr-8"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-stone-300">{unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>

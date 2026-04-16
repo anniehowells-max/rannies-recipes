@@ -53,6 +53,9 @@ function stripPrepInstructions(name: string): string {
   // Remove state/temperature phrases
   s = s.replace(/,?\s*at room temperature/gi, '').trim()
 
+  // Remove quality/welfare descriptors wherever they appear
+  s = s.replace(/\bfree[-\s]?range\b,?\s*/gi, '').trim()
+
   // Remove trailing comma-separated clauses that contain a prep word — loop to handle multiple
   const trailingClause = new RegExp(`,\\s*[^,]*\\b(?:${prepWords})\\b[^,]*$`, 'i')
   let prev = ''
