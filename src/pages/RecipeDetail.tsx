@@ -512,7 +512,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                   className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
               </div>
               <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)}
-                className="w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                className="w-full min-w-0 max-w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
               <div className="flex items-center gap-3 self-end">
                 {logError && <p className="text-red-400 text-xs">{logError}</p>}
                 <button onClick={() => { setAddingLog(false); setLogNote(''); setLogAuthor(''); setLogDate('') }}
@@ -549,7 +549,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                           className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
                       </div>
                       <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-                        className="w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                        className="w-full min-w-0 max-w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
                       <div className="flex gap-2 self-end">
                         <button onClick={() => setEditingId(null)}
                           className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors">
