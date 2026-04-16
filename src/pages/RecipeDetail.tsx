@@ -173,6 +173,15 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     return units === 'imperial' ? convertToImperial(scaled) : scaled
   }
 
+  function formatIngredient(text: string) {
+    // Match leading number/fraction and optional unit, e.g. "110g", "2 tbsp", "1/2 tsp", "½ cup"
+    const match = text.match(/^(\d+(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg|g|ml|dl|cl|tbsp|tsp|cups?|fl\s?oz|oz|lbs?|lb|pinch|handful|bunch|slices?|cans?|l(?=[\s,]|$)))?/i)
+    if (!match || !match[0]) return <>{text}</>
+    const bold = match[0]
+    const rest = text.slice(bold.length)
+    return <><span className="font-semibold">{bold}</span>{rest}</>
+  }
+
   function toggleUnits() {
     const next = units === 'metric' ? 'imperial' : 'metric'
     setUnits(next)
@@ -300,14 +309,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               </div>
               {recipe.portions && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
+                  <div className="flex items-center rounded-full border border-stone-200 p-0.5">
                     <button onClick={() => setPortions(p => Math.max(1, p - 1))}
-                      className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">−</button>
-                    <span className="text-sm font-medium w-6 text-center">{portions}</span>
+                      className="font-ui text-[10px] tracking-wider px-3 py-1 rounded-full transition-colors text-stone-400 hover:text-stone-600">−</button>
+                    <span className="font-ui text-[10px] font-semibold text-stone-700 px-1 min-w-[1.25rem] text-center">{portions}</span>
                     <button onClick={() => setPortions(p => p + 1)}
-                      className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">+</button>
+                      className="font-ui text-[10px] tracking-wider px-3 py-1 rounded-full transition-colors text-stone-400 hover:text-stone-600">+</button>
                   </div>
-                  <span className="text-xs text-stone-400">portions</span>
+                  <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">portions</span>
                 </div>
               )}
             </div>
@@ -316,7 +325,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             {(recipe.ingredients || []).map((ing, i) => (
               <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                 <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
-                {displayIngredient(ing)}
+                {formatIngredient(displayIngredient(ing))}
               </li>
             ))}
           </ul>
@@ -328,7 +337,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                 {(recipe.to_serve || []).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                     <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
-                    {displayIngredient(item)}
+                    {formatIngredient(displayIngredient(item))}
                   </li>
                 ))}
               </ul>
