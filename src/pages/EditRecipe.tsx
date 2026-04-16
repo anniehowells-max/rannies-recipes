@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase, type Recipe } from '../lib/supabase'
+import StepsList from '../components/StepsList'
 
 type Props = {
   recipe: Recipe
@@ -51,7 +52,8 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   const [tags, setTags] = useState((recipe.tags || []).join(', '))
   const [sourceUrl, setSourceUrl] = useState(recipe.source_url || '')
   const [ingredients, setIngredients] = useState((recipe.ingredients || []).join('\n'))
-  const [steps, setSteps] = useState((recipe.steps || []).join('\n'))
+  const [toServe, setToServe] = useState((recipe.to_serve || []).join('\n'))
+  const [steps, setSteps] = useState<string[]>(recipe.steps?.length ? recipe.steps : [''])
   const [notes, setNotes] = useState(recipe.notes || '')
   const [photoUrl, setPhotoUrl] = useState(recipe.photo_url || '')
   const [photoPreview, setPhotoPreview] = useState(recipe.photo_url || '')
@@ -97,7 +99,8 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       source_url: sourceUrl.trim() || null,
       ingredients: ingredients.split('\n').map(s => s.trim()).filter(Boolean),
-      steps: steps.split('\n').map(s => s.trim()).filter(Boolean),
+      to_serve: toServe.split('\n').map(s => s.trim()).filter(Boolean),
+      steps: steps.map(s => s.trim()).filter(Boolean),
       notes: notes.trim() || null,
       photo_url: photoUrl.trim() || null,
       portions: portions ? parseInt(portions) : null,
@@ -172,15 +175,20 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
           </div>
 
           <div>
-            <label className={labelClass}>method</label>
+            <label className={labelClass}>to serve</label>
             <textarea
-              value={steps}
-              onChange={e => setSteps(e.target.value)}
-              placeholder={"Cook pasta in salted water\nToast the pepper\nCombine and toss"}
-              rows={6}
+              value={toServe}
+              onChange={e => setToServe(e.target.value)}
+              placeholder={"crusty bread\ngreen salad"}
+              rows={3}
               className={inputClass}
             />
-            <p className="text-xs text-stone-400 mt-1">one step per line</p>
+            <p className="text-xs text-stone-400 mt-1">one item per line</p>
+          </div>
+
+          <div>
+            <label className={labelClass}>method</label>
+            <StepsList steps={steps} onChange={setSteps} />
           </div>
 
           <div>

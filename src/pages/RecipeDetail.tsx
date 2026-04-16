@@ -141,14 +141,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                 {recipe.prep_time_mins && (
                   <div className="flex items-center gap-1.5">
                     <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">prep</span>
-                    <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.prep_time_mins)}</span>
+                    <span className="font-ui text-sm font-semibold text-stone-700">{formatTime(recipe.prep_time_mins)}</span>
                   </div>
                 )}
                 {recipe.prep_time_mins && recipe.cook_time_mins && <span className="text-stone-200">|</span>}
                 {recipe.cook_time_mins && (
                   <div className="flex items-center gap-1.5">
                     <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">cook</span>
-                    <span className="text-sm font-semibold text-stone-700">{formatTime(recipe.cook_time_mins)}</span>
+                    <span className="font-ui text-sm font-semibold text-stone-700">{formatTime(recipe.cook_time_mins)}</span>
                   </div>
                 )}
               </div>
@@ -214,9 +214,27 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               </li>
             ))}
           </ul>
+
+          {(recipe.to_serve || []).length > 0 && (
+            <>
+              <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3 mt-6">to serve</p>
+              <ul className="space-y-2.5 mb-5">
+                {(recipe.to_serve || []).map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-base text-stone-700">
+                    <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
+                    {scaleIngredient(item)}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           <button
             onClick={() => {
-              addIngredientsToList((recipe.ingredients || []).map(scaleIngredient))
+              addIngredientsToList([
+                ...(recipe.ingredients || []).map(scaleIngredient),
+                ...(recipe.to_serve || []).map(scaleIngredient),
+              ])
               setAddedToGrocery(true)
               setTimeout(() => setAddedToGrocery(false), 2000)
             }}

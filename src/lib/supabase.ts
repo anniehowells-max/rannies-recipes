@@ -11,6 +11,7 @@ export type Recipe = {
   tags: string[]
   source_url: string | null
   ingredients: string[]
+  to_serve: string[] | null
   steps: string[]
   notes: string | null
   photo_url: string | null
