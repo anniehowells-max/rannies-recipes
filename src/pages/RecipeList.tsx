@@ -152,29 +152,32 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
                   <span className="font-ui absolute top-2 left-2 bg-stone-900 text-white text-[10px] tracking-widest uppercase px-2 py-1 rounded-full">new</span>
                 )}
               </div>
-              <div className="p-4">
-                <p className="font-serif text-base font-medium leading-snug mb-1 group-hover:text-stone-500 transition-colors">{recipe.title}</p>
-                {recipe.rating != null && (
-                  <div className="flex gap-0.5 mb-1.5">
-                    {[1, 2, 3, 4, 5].map(star => {
-                      const filled = star <= (recipe.rating as number)
-                      return (
-                        <svg key={star} viewBox="0 0 24 24" className="w-2.5 h-2.5">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                            fill={filled ? '#1c1917' : 'none'} stroke={filled ? '#1c1917' : '#d6d3d1'} strokeWidth="1.5" />
-                        </svg>
-                      )
-                    })}
+              <div className="p-4 flex flex-col gap-2 min-h-36">
+                <p className="font-serif text-base font-medium leading-snug group-hover:text-stone-500 transition-colors">{recipe.title}</p>
+                {(recipe.rating != null || cookCounts[recipe.id] > 0) && (
+                  <div className="flex items-center gap-2">
+                    {cookCounts[recipe.id] > 0 && (
+                      <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]} {cookCounts[recipe.id] === 1 ? 'time' : 'times'}</span>
+                    )}
+                    {recipe.rating != null && (
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map(star => {
+                          const filled = star <= (recipe.rating as number)
+                          return (
+                            <svg key={star} viewBox="0 0 24 24" className="w-2.5 h-2.5">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                fill={filled ? '#1c1917' : 'none'} stroke={filled ? '#1c1917' : '#d6d3d1'} strokeWidth="1.5" />
+                            </svg>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="border-t border-stone-100 pt-2 mt-3 flex items-center gap-2 flex-wrap">
+                <div className="mt-auto border-t border-stone-100 pt-2 flex items-center gap-2 flex-wrap">
                   {(recipe.tags || []).map(tag => (
-                    <span key={tag} className="font-ui text-[10px] tracking-wider uppercase text-stone-400">{tag}</span>
+                    <span key={tag} className="font-ui text-[10px] bg-stone-50 border border-stone-900 text-stone-900 px-2 py-0.5 rounded-full">{tag}</span>
                   ))}
-                  {(recipe.tags || []).length > 0 && cookCounts[recipe.id] && <span className="text-stone-200">·</span>}
-                  {cookCounts[recipe.id] > 0 && (
-                    <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]}×</span>
-                  )}
                 </div>
               </div>
             </div>
