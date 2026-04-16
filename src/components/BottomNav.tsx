@@ -24,13 +24,13 @@ export default function BottomNav({ screen, onNavigate }: Props) {
   const onMore = screen === 'more'
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 px-6 z-50 pointer-events-none">
-      <nav className="pointer-events-auto flex items-center gap-1 rounded-full px-3 py-3 backdrop-blur-2xl bg-white/70 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 px-2 z-50 pointer-events-none">
+      <nav className="pointer-events-auto flex items-center gap-1 rounded-full px-2 py-3 w-full max-w-sm backdrop-blur-2xl bg-white/70 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]">
 
         {/* Recipes */}
         <button
           onClick={() => onNavigate('list')}
-          className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+          className={`flex flex-col items-center gap-1 flex-1 py-2 rounded-full transition-all ${
             onRecipes ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
           }`}
         >
@@ -43,7 +43,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
         {/* Collections */}
         <button
           onClick={() => onNavigate('collections')}
-          className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+          className={`flex flex-col items-center gap-1 flex-1 py-2 rounded-full transition-all ${
             onCollections ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
           }`}
         >
@@ -64,7 +64,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
         {/* Grocery */}
         <button
           onClick={() => onNavigate('grocery')}
-          className={`relative flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+          className={`relative flex flex-col items-center gap-1 flex-1 py-2 rounded-full transition-all ${
             onGrocery ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
           }`}
         >
@@ -83,7 +83,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
         {/* More */}
         <button
           onClick={() => onNavigate('more')}
-          className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+          className={`flex flex-col items-center gap-1 flex-1 py-2 rounded-full transition-all ${
             onMore ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
           }`}
         >
