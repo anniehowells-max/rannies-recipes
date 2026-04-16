@@ -509,18 +509,18 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                   className="flex-1 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
                 <input type="text" value={logAuthor} onChange={e => setLogAuthor(e.target.value)}
                   placeholder="who cooked?"
-                  className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                  className="w-28 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
               </div>
-              <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)}
-                className="w-full min-w-0 max-w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
-              <div className="flex items-center gap-3 self-end">
+              <div className="flex items-center gap-3">
+                <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)}
+                  className="flex-1 min-w-0 px-3 py-2.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-800 focus:outline-none focus:border-stone-900 transition-colors [color-scheme:light]" />
                 {logError && <p className="text-red-400 text-xs">{logError}</p>}
                 <button onClick={() => { setAddingLog(false); setLogNote(''); setLogAuthor(''); setLogDate('') }}
-                  className="px-3 py-2 text-sm text-stone-400 hover:text-stone-600 transition-colors">
+                  className="px-3 py-2 text-sm text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0">
                   cancel
                 </button>
                 <button onClick={addLogEntry} disabled={saving || !logNote.trim()}
-                  className="px-5 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors">
+                  className="px-5 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors flex-shrink-0">
                   save
                 </button>
               </div>
@@ -546,17 +546,17 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                           className="flex-1 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
                         <input type="text" value={editAuthor} onChange={e => setEditAuthor(e.target.value)}
                           placeholder="who cooked?"
-                          className="w-32 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
+                          className="w-28 min-w-0 px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
                       </div>
-                      <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-                        className="w-full min-w-0 max-w-full px-3 py-2.5 text-base rounded-lg border border-stone-200 bg-white focus:outline-none focus:border-stone-900 transition-colors" />
-                      <div className="flex gap-2 self-end">
+                      <div className="flex items-center gap-2">
+                        <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-800 focus:outline-none focus:border-stone-900 transition-colors [color-scheme:light]" />
                         <button onClick={() => setEditingId(null)}
-                          className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors">
+                          className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0">
                           cancel
                         </button>
                         <button onClick={() => saveEdit(entry.id)} disabled={saving}
-                          className="px-4 py-1.5 text-xs bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors">
+                          className="px-4 py-1.5 text-xs bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0">
                           save
                         </button>
                       </div>
