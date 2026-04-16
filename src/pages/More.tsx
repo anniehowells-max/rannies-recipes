@@ -2,6 +2,25 @@ import { useState } from 'react'
 import JSZip from 'jszip'
 import { supabase } from '../lib/supabase'
 
+async function gunzip(data: Uint8Array): Promise<string> {
+  const ds = new DecompressionStream('gzip')
+  const writer = ds.writable.getWriter()
+  writer.write(data)
+  writer.close()
+  const chunks: Uint8Array[] = []
+  const reader = ds.readable.getReader()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+  }
+  const total = chunks.reduce((n, c) => n + c.length, 0)
+  const merged = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length }
+  return new TextDecoder().decode(merged)
+}
+
 const OUR_FIELDS: { key: string; label: string; required?: true }[] = [
   { key: 'title',          label: 'title',              required: true },
   { key: 'ingredients',    label: 'ingredients' },
@@ -115,16 +134,89 @@ export default function More() {
     setZipImporting(true)
     setZipResult(null)
     try {
+      // Paprika export format (.paprikarecipes is a ZIP of gzipped JSON files)
+      if (file.name.endsWith('.paprikarecipes')) {
+        const zip = await JSZip.loadAsync(file)
+        const recipeFiles = zip.file(/\.paprikarecipe$/)
+        if (recipeFiles.length === 0) throw new Error('No .paprikarecipe files found in the Paprika export.')
+        const toInsert: Record<string, unknown>[] = []
+        for (const recipeFile of recipeFiles) {
+          try {
+            const compressed = await recipeFile.async('uint8array')
+            const text = await gunzip(compressed)
+            const raw = JSON.parse(text)
+            const recipe: Record<string, unknown> = {}
+            if (raw.name) recipe.title = String(raw.name)
+            if (!recipe.title) continue
+            if (typeof raw.ingredients === 'string')
+              recipe.ingredients = (raw.ingredients as string).split('\n').map((s: string) => s.trim()).filter(Boolean)
+            if (typeof raw.directions === 'string')
+              recipe.steps = (raw.directions as string).split('\n').map((s: string) => s.trim()).filter(Boolean)
+            if (raw.notes) recipe.notes = String(raw.notes)
+            if (Array.isArray(raw.tags)) recipe.tags = (raw.tags as unknown[]).map(String).filter(Boolean)
+            if (raw.source) recipe.source_url = String(raw.source)
+            toInsert.push(recipe)
+          } catch {
+            // skip malformed files
+          }
+        }
+        if (toInsert.length === 0) throw new Error('No valid recipes found in the Paprika export.')
+        const { error } = await supabase.from('recipes').insert(toInsert)
+        if (error) throw new Error(error.message)
+        setZipResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} from Paprika successfully.` })
+        setZipImporting(false)
+        e.target.value = ''
+        return
+      }
+
       const zip = await JSZip.loadAsync(file)
+
+      // Our own backup format
       const jsonFile = zip.file('recipes/recipes.json') ?? zip.file('recipes.json')
-      if (!jsonFile) throw new Error('Could not find recipes.json in the zip — make sure this is a backup exported from this app.')
-      const recipes = JSON.parse(await jsonFile.async('text'))
-      if (!Array.isArray(recipes)) throw new Error('recipes.json must contain an array of recipes.')
-      // Strip fields that should not be re-inserted
-      const toInsert = recipes.map(({ id: _id, created_at: _c, updated_at: _u, photo_url: _p, ...rest }: Record<string, unknown>) => rest)
-      const { error } = await supabase.from('recipes').insert(toInsert)
-      if (error) throw new Error(error.message)
-      setZipResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} successfully.` })
+      if (jsonFile) {
+        const recipes = JSON.parse(await jsonFile.async('text'))
+        if (!Array.isArray(recipes)) throw new Error('recipes.json must contain an array of recipes.')
+        const toInsert = recipes.map(({ id: _id, created_at: _c, updated_at: _u, photo_url: _p, ...rest }: Record<string, unknown>) => rest)
+        const { error } = await supabase.from('recipes').insert(toInsert)
+        if (error) throw new Error(error.message)
+        setZipResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} successfully.` })
+        setZipImporting(false)
+        e.target.value = ''
+        return
+      }
+
+      // Crouton export format (.crumb files are JSON)
+      const crumbFiles = zip.file(/\.crumb$/)
+      if (crumbFiles.length > 0) {
+        const toInsert: Record<string, unknown>[] = []
+        for (const crumbFile of crumbFiles) {
+          try {
+            const raw = JSON.parse(await crumbFile.async('text'))
+            const recipe: Record<string, unknown> = {}
+            if (raw.name) recipe.title = String(raw.name)
+            if (!recipe.title) continue
+            if (Array.isArray(raw.ingredients))
+              recipe.ingredients = raw.ingredients.map((i: Record<string, unknown>) => String(i.name ?? i)).filter(Boolean)
+            if (Array.isArray(raw.steps))
+              recipe.steps = raw.steps.map((s: Record<string, unknown>) => String(s.directions ?? s)).filter(Boolean)
+            if (raw.notes) recipe.notes = String(raw.notes)
+            if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
+            if (raw.source) recipe.source_url = String(raw.source)
+            toInsert.push(recipe)
+          } catch {
+            // skip malformed files
+          }
+        }
+        if (toInsert.length === 0) throw new Error('No valid recipes found in the Crouton export.')
+        const { error } = await supabase.from('recipes').insert(toInsert)
+        if (error) throw new Error(error.message)
+        setZipResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} from Crouton successfully.` })
+        setZipImporting(false)
+        e.target.value = ''
+        return
+      }
+
+      throw new Error('Unrecognised ZIP format — expected a backup from this app, a Crouton export, or a Paprika export.')
     } catch (err) {
       setZipResult({ ok: false, message: (err as Error).message })
     }
@@ -132,11 +224,53 @@ export default function More() {
     e.target.value = ''
   }
 
+  // ── Mela import handler ─────────────────────────────────
+  async function handleMelaImport(file: File) {
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as Record<string, unknown>
+      let arr: Record<string, unknown>[]
+      if (Array.isArray(parsed)) arr = parsed
+      else if (Array.isArray(parsed.recipes)) arr = parsed.recipes as Record<string, unknown>[]
+      else arr = [parsed]
+
+      const toInsert = arr
+        .map(raw => {
+          const recipe: Record<string, unknown> = {}
+          if (raw.title) recipe.title = String(raw.title)
+          if (!recipe.title) return null
+          if (typeof raw.ingredients === 'string')
+            recipe.ingredients = (raw.ingredients as string).split('\n').map(s => s.trim()).filter(Boolean)
+          if (typeof raw.instructions === 'string')
+            recipe.steps = (raw.instructions as string).split('\n').map(s => s.trim()).filter(Boolean)
+          if (raw.notes) recipe.notes = String(raw.notes)
+          if (Array.isArray(raw.tags)) recipe.tags = (raw.tags as unknown[]).map(String).filter(Boolean)
+          if (raw.link) recipe.source_url = String(raw.link)
+          return recipe
+        })
+        .filter((r): r is Record<string, unknown> => r !== null && Boolean(r.title))
+
+      if (toInsert.length === 0) throw new Error('No valid recipes found in the Mela export.')
+      const { error } = await supabase.from('recipes').insert(toInsert)
+      if (error) throw new Error(error.message)
+      setJsonResult({ ok: true, message: `Imported ${toInsert.length} recipe${toInsert.length === 1 ? '' : 's'} from Mela successfully.` })
+    } catch (err) {
+      setJsonResult({ ok: false, message: (err as Error).message })
+    }
+  }
+
   // ── JSON file picker ────────────────────────────────────
   function handleJsonFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setJsonResult(null)
+
+    if (file.name.endsWith('.mela') || file.name.endsWith('.melarecipes')) {
+      handleMelaImport(file)
+      e.target.value = ''
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = ev => {
       try {
@@ -214,11 +348,11 @@ export default function More() {
         <div className="px-6 py-8 border-b-2 border-stone-200">
           <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">import from backup</p>
           <p className="text-sm text-stone-500 leading-relaxed mb-5">
-            Restore recipes from a .zip file previously exported from this app.
+            Restore from a backup exported from this app, or import from Crouton (.zip) or Paprika (.paprikarecipes).
           </p>
           <label className={`inline-block font-ui text-xs tracking-wider uppercase px-4 py-2.5 rounded-lg transition-colors cursor-pointer text-white ${zipImporting ? 'bg-stone-900 opacity-40 pointer-events-none' : 'bg-stone-900 hover:bg-black'}`}>
-            {zipImporting ? 'importing...' : 'choose .zip file'}
-            <input type="file" accept=".zip" onChange={handleZipImport} className="sr-only" disabled={zipImporting} />
+            {zipImporting ? 'importing...' : 'choose file'}
+            <input type="file" accept=".zip,.paprikarecipes" onChange={handleZipImport} className="sr-only" disabled={zipImporting} />
           </label>
           {zipResult && (
             <p className={`mt-4 text-sm ${zipResult.ok ? 'text-stone-600' : 'text-red-400'}`}>
@@ -231,14 +365,14 @@ export default function More() {
         <div className="px-6 py-8 border-b-2 border-stone-200">
           <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">import from another app</p>
           <p className="text-sm text-stone-500 leading-relaxed mb-5">
-            Upload a JSON file from another recipe app — a single recipe object or an array. You'll be able to map its fields to ours before importing.
+            Import from Mela (.mela or .melarecipes) — imported automatically. Or upload any other app's JSON file to map fields manually before importing.
           </p>
 
           {!jsonData ? (
             <>
               <label className="inline-block font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-900 hover:bg-black text-white rounded-lg transition-colors cursor-pointer">
-                choose .json file
-                <input type="file" accept=".json" onChange={handleJsonFile} className="sr-only" />
+                choose file
+                <input type="file" accept=".json,.mela,.melarecipes" onChange={handleJsonFile} className="sr-only" />
               </label>
               {jsonResult && !jsonResult.ok && (
                 <p className="mt-4 text-sm text-red-400">{jsonResult.message}</p>
