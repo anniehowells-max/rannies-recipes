@@ -18,7 +18,7 @@ function TimeInput({ label, hours, mins, onHoursChange, onMinsChange }: {
   const inputClass = "w-14 px-2 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 text-center focus:outline-none focus:border-stone-900 transition-colors text-base"
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">{label}</p>
+      <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3">{label}</p>
       <div className="flex items-center gap-1.5">
         <input
           type="number" min="0" max="23" value={hours}
@@ -133,25 +133,25 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
     }
   }
 
-  const labelClass = "text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1 block"
+  const labelClass = "font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3 block"
   const inputClass = "w-full px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors text-base"
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-32">
+    <div className="min-h-screen bg-white pb-32">
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <button onClick={onBack} className="text-stone-400 hover:text-stone-600 text-sm mb-6 flex items-center gap-1 transition-colors">
-          ← back to recipe
+        <button onClick={onBack} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors mb-6">
+          ← back
         </button>
 
-        <h1 className="font-serif text-3xl font-medium mb-8">edit recipe</h1>
+        <h1 className="font-serif text-3xl font-medium mb-4">edit recipe</h1>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-5">
-          <div>
+        <form onSubmit={handleSave} className="flex flex-col">
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>recipe name *</label>
             <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Mum's Bolognese" className={inputClass} />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200 grid grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>portions</label>
               <input type="number" min="1" value={portions} onChange={e => setPortions(e.target.value)} placeholder="e.g. 4" className={inputClass} />
@@ -167,12 +167,12 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200 grid grid-cols-2 gap-4">
             <TimeInput label="prep time" hours={prepHours} mins={prepMins} onHoursChange={setPrepHours} onMinsChange={setPrepMins} />
             <TimeInput label="cook time" hours={cookHours} mins={cookMins} onHoursChange={setCookHours} onMinsChange={setCookMins} />
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>nutrition per portion</label>
             <div className="grid grid-cols-5 gap-3">
               {([
@@ -198,7 +198,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             </div>
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>ingredients</label>
             <textarea
               value={ingredients}
@@ -210,7 +210,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             <p className="text-xs text-stone-400 mt-1">one ingredient per line</p>
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>to serve</label>
             <textarea
               value={toServe}
@@ -222,12 +222,12 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             <p className="text-xs text-stone-400 mt-1">one item per line</p>
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>method</label>
             <StepsList steps={steps} onChange={setSteps} />
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>notes / tips</label>
             <textarea
               value={notes}
@@ -238,7 +238,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             />
           </div>
 
-          <div>
+          <div className="py-8 -mx-4 px-4 border-b-2 border-stone-200">
             <label className={labelClass}>photo</label>
             {photoPreview ? (
               <div className="relative mb-2">
@@ -246,7 +246,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
                 <button
                   type="button"
                   onClick={() => { setPhotoPreview(''); setPhotoUrl('') }}
-                  className="absolute top-2 right-2 bg-white/80 hover:bg-white text-stone-500 text-xs px-2 py-1 rounded-md transition-colors"
+                  className="font-ui text-xs tracking-wider uppercase absolute top-2 right-2 bg-white/80 hover:bg-white text-stone-500 px-2 py-1 rounded-md transition-colors"
                 >
                   remove
                 </button>
@@ -267,14 +267,14 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-stone-800 hover:bg-stone-900 disabled:opacity-50 text-white rounded-lg font-semibold text-sm transition-colors"
+              className="font-ui text-xs tracking-wider uppercase px-6 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-50 text-white rounded-lg transition-colors"
             >
               {saving ? 'saving...' : 'save changes'}
             </button>
             <button
               type="button"
               onClick={onBack}
-              className="px-6 py-2.5 border border-stone-200 hover:border-stone-300 text-stone-500 rounded-lg text-sm transition-colors"
+              className="font-ui text-xs tracking-wider uppercase px-6 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-lg transition-colors"
             >
               cancel
             </button>

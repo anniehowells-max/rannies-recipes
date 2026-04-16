@@ -236,18 +236,18 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
       {/* Top nav */}
       <div className="border-b border-stone-100">
         <div className="max-w-2xl md:max-w-none mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-          <button onClick={onBack} className="px-4 py-2.5 text-sm text-stone-500 hover:text-stone-800 transition-colors">
+          <button onClick={onBack} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors">
             ← back
           </button>
           <div className="flex gap-2">
-            <button onClick={onEdit} className="px-4 py-2.5 bg-stone-900 hover:bg-black text-white text-sm rounded-lg transition-colors">edit</button>
-            <button onClick={handleDelete} className="px-4 py-2.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-600 text-sm rounded-lg transition-colors">delete</button>
+            <button onClick={onEdit} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-900 hover:bg-black text-white rounded-lg transition-colors">edit</button>
+            <button onClick={handleDelete} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-600 rounded-lg transition-colors">delete</button>
           </div>
         </div>
       </div>
 
       {/* Hero: image left, title right on landscape */}
-      <div className="lg:flex border-b-2 border-stone-200">
+      <div className="lg:flex lg:border-b-2 lg:border-stone-200">
 
         {/* Image */}
         {recipe.photo_url ? (
@@ -319,6 +319,29 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
       <div className="max-w-2xl md:max-w-none mx-auto">
 
+        {/* Toggles */}
+        <div className="px-6 py-4 border-b-2 border-stone-200 flex items-center gap-3 flex-wrap">
+          <div className="flex items-center rounded-full border border-stone-200 p-1">
+            <button onClick={() => { if (units !== 'metric') toggleUnits() }}
+              className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full transition-colors ${units === 'metric' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
+              metric
+            </button>
+            <button onClick={() => { if (units !== 'imperial') toggleUnits() }}
+              className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full transition-colors ${units === 'imperial' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
+              imperial
+            </button>
+          </div>
+          {recipe.portions && (
+            <div className="flex items-center rounded-full border border-stone-200 p-1">
+              <button onClick={() => setPortions(p => Math.max(1, p - 1))}
+                className="font-ui text-xs tracking-wider px-4 py-2 rounded-full transition-colors text-stone-400 hover:text-stone-600">−</button>
+              <span className="font-ui text-xs font-semibold text-stone-700 px-2 text-center whitespace-nowrap">{portions} ppl</span>
+              <button onClick={() => setPortions(p => p + 1)}
+                className="font-ui text-xs tracking-wider px-4 py-2 rounded-full transition-colors text-stone-400 hover:text-stone-600">+</button>
+            </div>
+          )}
+        </div>
+
         {/* Ingredients + Method two-column on iPad+ */}
         <div className="md:grid md:grid-cols-2 md:divide-x-2 md:divide-stone-200 border-b-2 border-stone-200">
 
@@ -326,30 +349,19 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         <div className="py-8 px-6 border-b-2 border-stone-200 md:border-b-0">
           <div className="flex items-center justify-between mb-5">
             <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center rounded-full border border-stone-200 p-0.5">
-                <button onClick={() => { if (units !== 'metric') toggleUnits() }}
-                  className={`font-ui text-[10px] tracking-wider uppercase px-3 py-1 rounded-full transition-colors ${units === 'metric' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
-                  metric
-                </button>
-                <button onClick={() => { if (units !== 'imperial') toggleUnits() }}
-                  className={`font-ui text-[10px] tracking-wider uppercase px-3 py-1 rounded-full transition-colors ${units === 'imperial' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
-                  imperial
-                </button>
-              </div>
-              {recipe.portions && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center rounded-full border border-stone-200 p-0.5">
-                    <button onClick={() => setPortions(p => Math.max(1, p - 1))}
-                      className="font-ui text-[10px] tracking-wider px-3 py-1 rounded-full transition-colors text-stone-400 hover:text-stone-600">−</button>
-                    <span className="font-ui text-[10px] font-semibold text-stone-700 px-1 min-w-[1.25rem] text-center">{portions}</span>
-                    <button onClick={() => setPortions(p => p + 1)}
-                      className="font-ui text-[10px] tracking-wider px-3 py-1 rounded-full transition-colors text-stone-400 hover:text-stone-600">+</button>
-                  </div>
-                  <span className="font-ui text-[10px] tracking-[0.15em] uppercase text-stone-400">portions</span>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => {
+                addIngredientsToList([
+                  ...(recipe.ingredients || []).map(scaleIngredient),
+                  ...(recipe.to_serve || []).map(scaleIngredient),
+                ])
+                setAddedToGrocery(true)
+                setTimeout(() => setAddedToGrocery(false), 2000)
+              }}
+              className="font-ui text-xs tracking-wider uppercase px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors"
+            >
+              {addedToGrocery ? '✓ added to groceries' : '+ add to groceries'}
+            </button>
           </div>
           <ul className="space-y-2.5 mb-5">
             {(recipe.ingredients || []).map((ing, i) => (
@@ -363,7 +375,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           {(recipe.to_serve || []).length > 0 && (
             <>
               <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-3 mt-6">to serve</p>
-              <ul className="space-y-2.5 mb-5">
+              <ul className="space-y-2.5">
                 {(recipe.to_serve || []).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                     <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
@@ -373,20 +385,6 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
               </ul>
             </>
           )}
-
-          <button
-            onClick={() => {
-              addIngredientsToList([
-                ...(recipe.ingredients || []).map(scaleIngredient),
-                ...(recipe.to_serve || []).map(scaleIngredient),
-              ])
-              setAddedToGrocery(true)
-              setTimeout(() => setAddedToGrocery(false), 2000)
-            }}
-            className="text-sm text-stone-500 hover:text-stone-900 transition-colors"
-          >
-            {addedToGrocery ? '✓ added to grocery list' : '+ add to grocery list'}
-          </button>
         </div>
 
         {/* Method */}
@@ -448,9 +446,9 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">collections</p>
             <button
               onClick={() => setShowCollectionPicker(v => !v)}
-              className="text-sm text-stone-500 hover:text-stone-900 transition-colors"
+              className="font-ui text-xs tracking-wider uppercase px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors"
             >
-              + add to collection
+              {showCollectionPicker ? 'done' : '+ add to collection'}
             </button>
           </div>
 
@@ -465,14 +463,16 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                     <button
                       key={col.id}
                       onClick={() => toggleCollection(col)}
-                      className="w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 flex items-center justify-between border-b border-stone-100 last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-3 border-b border-stone-100 last:border-b-0 transition-colors"
                     >
+                      <span className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${active ? 'bg-stone-900 border-stone-900' : 'border-stone-300'}`}>
+                        {active && (
+                          <svg viewBox="0 0 10 8" className="w-3 h-3">
+                            <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
                       {col.name}
-                      {active && (
-                        <svg viewBox="0 0 10 8" className="w-3 h-3 flex-shrink-0">
-                          <path d="M1 4l3 3 5-6" stroke="#1c1917" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
                     </button>
                   )
                 })
@@ -499,9 +499,17 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
         {/* Cooking log */}
         <div className="py-8 pb-16 px-6">
-          <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">cooking log</p>
+          <div className="flex items-center justify-between mb-5">
+            <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">cooking log</p>
+            {!addingLog && (
+              <button onClick={() => setAddingLog(true)}
+                className="font-ui text-xs tracking-wider uppercase px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors">
+                + add entry
+              </button>
+            )}
+          </div>
 
-          {addingLog ? (
+          {addingLog && (
             <div className="flex flex-col gap-2 mb-6">
               <div className="flex gap-2">
                 <input type="text" value={logNote} onChange={e => setLogNote(e.target.value)}
@@ -516,20 +524,15 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                   className="flex-1 min-w-0 px-3 py-2.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-800 focus:outline-none focus:border-stone-900 transition-colors [color-scheme:light]" />
                 {logError && <p className="text-red-400 text-xs">{logError}</p>}
                 <button onClick={() => { setAddingLog(false); setLogNote(''); setLogAuthor(''); setLogDate('') }}
-                  className="px-3 py-2 text-sm text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0">
+                  className="font-ui text-xs tracking-wider uppercase px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-lg transition-colors flex-shrink-0">
                   cancel
                 </button>
                 <button onClick={addLogEntry} disabled={saving || !logNote.trim()}
-                  className="px-5 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors flex-shrink-0">
+                  className="font-ui text-xs tracking-wider uppercase px-4 py-2 bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0">
                   save
                 </button>
               </div>
             </div>
-          ) : (
-            <button onClick={() => setAddingLog(true)}
-              className="mb-6 text-sm text-stone-500 hover:text-stone-900 transition-colors">
-              + add new log entry
-            </button>
           )}
 
           {log.length === 0 ? (
@@ -552,11 +555,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                         <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
                           className="flex-1 min-w-0 px-3 py-2.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-800 focus:outline-none focus:border-stone-900 transition-colors [color-scheme:light]" />
                         <button onClick={() => setEditingId(null)}
-                          className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors flex-shrink-0">
+                          className="font-ui text-xs tracking-wider uppercase px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-lg transition-colors flex-shrink-0">
                           cancel
                         </button>
                         <button onClick={() => saveEdit(entry.id)} disabled={saving}
-                          className="px-4 py-1.5 text-xs bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0">
+                          className="font-ui text-xs tracking-wider uppercase px-4 py-1.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0">
                           save
                         </button>
                       </div>
@@ -570,11 +573,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                         {entry.note && <p className="text-base text-stone-600 italic">{entry.note}</p>}
                       </div>
                       <button onClick={() => startEdit(entry)}
-                        className="px-3 py-1.5 text-xs text-stone-400 hover:text-stone-700 hover:bg-stone-50 rounded-lg transition-colors flex-shrink-0">
+                        className="font-ui text-xs tracking-wider uppercase px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-lg transition-colors flex-shrink-0">
                         edit
                       </button>
                       <button onClick={() => deleteLogEntry(entry.id)}
-                        className="px-3 py-1.5 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                        className="font-ui text-xs tracking-wider uppercase px-3 py-1.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-500 rounded-lg transition-colors flex-shrink-0">
                         delete
                       </button>
                     </div>

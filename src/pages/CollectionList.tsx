@@ -78,7 +78,7 @@ export default function CollectionList({ onSelect }: Props) {
           <button
             onClick={createCollection}
             disabled={creating || !newName.trim()}
-            className="px-4 py-2 bg-stone-900 hover:bg-black disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
+            className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-black hover:bg-stone-800 text-white rounded-lg transition-colors"
           >
             create
           </button>
@@ -103,7 +103,7 @@ export default function CollectionList({ onSelect }: Props) {
                 </button>
                 <button
                   onClick={() => deleteCollection(col.id)}
-                  className="px-3 py-1.5 text-xs text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                  className="font-ui text-xs tracking-wider uppercase px-3 py-1.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-500 rounded-lg transition-colors flex-shrink-0"
                 >
                   delete
                 </button>

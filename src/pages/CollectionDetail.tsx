@@ -9,6 +9,7 @@ type Props = {
 
 export default function CollectionDetail({ collection, onBack, onSelect }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [cookCounts, setCookCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { load() }, [collection.id])
@@ -22,8 +23,16 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
 
     if (links && links.length > 0) {
       const ids = links.map(l => l.recipe_id)
-      const { data } = await supabase.from('recipes').select('*').in('id', ids)
+      const [{ data }, { data: logs }] = await Promise.all([
+        supabase.from('recipes').select('*').in('id', ids),
+        supabase.from('cook_log').select('recipe_id').in('recipe_id', ids),
+      ])
       if (data) setRecipes(data)
+      if (logs) {
+        const counts: Record<string, number> = {}
+        logs.forEach(l => { counts[l.recipe_id] = (counts[l.recipe_id] || 0) + 1 })
+        setCookCounts(counts)
+      }
     } else {
       setRecipes([])
     }
@@ -45,7 +54,7 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
       {/* Top nav */}
       <div className="border-b border-stone-100">
         <div className="max-w-5xl mx-auto px-6 py-3">
-          <button onClick={onBack} className="px-4 py-2.5 text-sm text-stone-500 hover:text-stone-800 transition-colors">
+          <button onClick={onBack} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors">
             ← back
           </button>
         </div>
@@ -70,20 +79,62 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
       ) : (
         <div className="border-t border-stone-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {recipes.map(recipe => (
-            <div key={recipe.id} className="border-b border-r border-stone-200 relative group">
-              <div className="cursor-pointer" onClick={() => onSelect(recipe)}>
-                <div className="aspect-[4/3] bg-stone-50 overflow-hidden">
-                  {recipe.photo_url
-                    ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
-                  }
-                </div>
-                <div className="p-4 min-h-20">
-                  <p className="font-serif text-base font-medium leading-snug">{recipe.title}</p>
+            <div key={recipe.id} onClick={() => onSelect(recipe)}
+              className="cursor-pointer group border-b border-r border-stone-200 relative">
+              <div className="aspect-[4/3] bg-stone-50 overflow-hidden relative">
+                {recipe.photo_url
+                  ? <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-3xl text-stone-300">🍽️</div>
+                }
+                {!cookCounts[recipe.id] && (
+                  <span className="font-ui absolute top-2 left-2 bg-stone-900 text-white text-[10px] tracking-widest uppercase px-2 py-1 rounded-full">new</span>
+                )}
+              </div>
+              <div className="p-4 flex flex-col gap-2 min-h-36">
+                <p className="font-serif text-base font-medium leading-snug">{recipe.title}</p>
+                {((recipe.prep_time_mins ?? 0) + (recipe.cook_time_mins ?? 0)) > 0 && (() => {
+                  const total = (recipe.prep_time_mins ?? 0) + (recipe.cook_time_mins ?? 0)
+                  const display = total > 59
+                    ? `${Math.floor(total / 60)} h${total % 60 > 0 ? ` ${total % 60} mins` : ''}`
+                    : `${total} mins`
+                  return (
+                    <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400 flex items-center gap-1">
+                      <svg viewBox="0 0 24 24" className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      {display}
+                    </span>
+                  )
+                })()}
+                {(recipe.rating != null || cookCounts[recipe.id] > 0) && (
+                  <div className="flex items-center gap-2">
+                    {cookCounts[recipe.id] > 0 && (
+                      <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">cooked {cookCounts[recipe.id]} {cookCounts[recipe.id] === 1 ? 'time' : 'times'}</span>
+                    )}
+                    {recipe.rating != null && (
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map(star => {
+                          const filled = star <= (recipe.rating as number)
+                          return (
+                            <svg key={star} viewBox="0 0 24 24" className="w-2.5 h-2.5">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                fill={filled ? '#1c1917' : 'none'} stroke={filled ? '#1c1917' : '#d6d3d1'} strokeWidth="1.5" />
+                            </svg>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="mt-auto border-t border-stone-100 pt-2 flex items-center gap-2 flex-wrap">
+                  {(recipe.tags || []).map(tag => (
+                    <span key={tag} className="font-ui text-[10px] bg-stone-50 border border-stone-900 text-stone-900 px-2 py-0.5 rounded-full">{tag}</span>
+                  ))}
                 </div>
               </div>
               <button
-                onClick={() => removeRecipe(recipe.id)}
+                onClick={e => { e.stopPropagation(); removeRecipe(recipe.id) }}
                 title="Remove from collection"
                 className="absolute top-2 right-2 w-6 h-6 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-white transition-colors opacity-0 group-hover:opacity-100 text-sm leading-none"
               >
