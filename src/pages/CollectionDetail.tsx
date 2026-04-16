@@ -11,6 +11,10 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [cookCounts, setCookCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
+  const [showPicker, setShowPicker] = useState(false)
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => { load() }, [collection.id])
 
@@ -48,6 +52,35 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
     setRecipes(prev => prev.filter(r => r.id !== recipeId))
   }
 
+  async function openPicker() {
+    const { data } = await supabase.from('recipes').select('*').order('title')
+    if (data) {
+      const existingIds = new Set(recipes.map(r => r.id))
+      setAllRecipes(data.filter(r => !existingIds.has(r.id)))
+    }
+    setSelectedIds(new Set())
+    setShowPicker(true)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  async function addSelected() {
+    if (selectedIds.size === 0) { setShowPicker(false); return }
+    setAdding(true)
+    await supabase.from('collection_recipes').insert(
+      Array.from(selectedIds).map(recipe_id => ({ collection_id: collection.id, recipe_id }))
+    )
+    await load()
+    setShowPicker(false)
+    setAdding(false)
+  }
+
   return (
     <div className="min-h-screen bg-white pb-32">
 
@@ -62,20 +95,71 @@ export default function CollectionDetail({ collection, onBack, onSelect }: Props
 
       {/* Header */}
       <div className="border-b border-stone-100">
-        <div className="max-w-5xl mx-auto px-6 py-5">
-          <h1 className="font-serif text-4xl font-medium tracking-tight italic">{collection.name}</h1>
-          {!loading && (
-            <p className="font-ui text-xs text-stone-400 tracking-wide mt-1">
-              {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
-            </p>
-          )}
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-4xl font-medium tracking-tight italic">{collection.name}</h1>
+            {!loading && (
+              <p className="font-ui text-xs text-stone-400 tracking-wide mt-1">
+                {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={openPicker}
+            className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-900 hover:bg-black text-white rounded-lg transition-colors"
+          >
+            + add recipes
+          </button>
         </div>
       </div>
 
-      {loading ? (
+      {showPicker ? (
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <div className="border border-stone-200 rounded-xl overflow-hidden mb-6">
+            {allRecipes.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-stone-300 italic">all recipes are already in this collection</p>
+            ) : (
+              allRecipes.map(recipe => {
+                const selected = selectedIds.has(recipe.id)
+                return (
+                  <button
+                    key={recipe.id}
+                    onClick={() => toggleSelect(recipe.id)}
+                    className="w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-3 border-b border-stone-100 last:border-b-0 transition-colors"
+                  >
+                    <span className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${selected ? 'bg-stone-900 border-stone-900' : 'border-stone-300'}`}>
+                      {selected && (
+                        <svg viewBox="0 0 10 8" className="w-3 h-3">
+                          <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    {recipe.title}
+                  </button>
+                )
+              })
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={addSelected}
+              disabled={adding || selectedIds.size === 0}
+              className="font-ui text-xs tracking-wider uppercase px-6 py-2.5 bg-stone-900 hover:bg-black disabled:opacity-40 text-white rounded-lg transition-colors"
+            >
+              {adding ? 'adding...' : `add ${selectedIds.size > 0 ? selectedIds.size : ''} ${selectedIds.size === 1 ? 'recipe' : 'recipes'}`}
+            </button>
+            <button
+              onClick={() => setShowPicker(false)}
+              className="font-ui text-xs tracking-wider uppercase px-6 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-lg transition-colors"
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      ) : loading ? (
         <p className="px-6 pt-6 text-stone-300 text-sm">loading...</p>
       ) : recipes.length === 0 ? (
-        <p className="px-6 pt-6 text-stone-300 text-sm italic">no recipes in this collection yet — add some from a recipe's page</p>
+        <p className="px-6 pt-6 text-stone-300 text-sm italic">no recipes in this collection yet</p>
       ) : (
         <div className="border-t border-stone-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
           {recipes.map(recipe => (

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { loadGroceryList } from '../pages/GroceryList'
 
-type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail' | 'more'
 
 type Props = {
   screen: Screen
-  onNavigate: (screen: 'list' | 'grocery' | 'add' | 'collections') => void
+  onNavigate: (screen: 'list' | 'grocery' | 'add' | 'collections' | 'more') => void
 }
 
 export default function BottomNav({ screen, onNavigate }: Props) {
@@ -21,6 +21,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
   const onRecipes = screen === 'list' || screen === 'detail' || screen === 'edit'
   const onCollections = screen === 'collections' || screen === 'collection-detail'
   const onGrocery = screen === 'grocery'
+  const onMore = screen === 'more'
 
   return (
     <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 px-6 z-50 pointer-events-none">
@@ -77,6 +78,21 @@ export default function BottomNav({ screen, onNavigate }: Props) {
               {groceryCount}
             </span>
           )}
+        </button>
+
+        {/* More */}
+        <button
+          onClick={() => onNavigate('more')}
+          className={`flex flex-col items-center gap-1 px-6 py-2 rounded-full transition-all ${
+            onMore ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
+          }`}
+        >
+          <svg viewBox="0 0 24 24" className={`w-5 h-5 ${onMore ? 'text-stone-900' : 'text-stone-400'}`} fill="currentColor" stroke="none">
+            <circle cx="5" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="19" cy="12" r="1.5" />
+          </svg>
+          <span className={`font-ui text-[10px] font-medium tracking-wide ${onMore ? 'text-stone-900' : 'text-stone-400'}`}>more</span>
         </button>
 
       </nav>

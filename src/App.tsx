@@ -7,10 +7,11 @@ import EditRecipe from './pages/EditRecipe'
 import GroceryList from './pages/GroceryList'
 import CollectionList from './pages/CollectionList'
 import CollectionDetail from './pages/CollectionDetail'
+import More from './pages/More'
 import BottomNav from './components/BottomNav'
 import { type Recipe, type Collection } from './lib/supabase'
 
-type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail' | 'more'
 
 export default function App() {
   const isAuthed = sessionStorage.getItem('kitchen-auth') === 'true'
@@ -78,6 +79,9 @@ export default function App() {
         />
       )
     }
+    if (screen === 'more') {
+      return <More />
+    }
     return (
       <RecipeList
         onSelect={recipe => openRecipe(recipe, 'list')}
@@ -96,6 +100,7 @@ export default function App() {
             if (s === 'add') setScreen('add')
             else if (s === 'grocery') setScreen('grocery')
             else if (s === 'collections') setScreen('collections')
+            else if (s === 'more') setScreen('more')
             else setScreen('list')
           }}
         />

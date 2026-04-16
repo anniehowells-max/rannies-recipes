@@ -73,7 +73,7 @@ export default function CollectionList({ onSelect }: Props) {
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && createCollection()}
             placeholder="new collection name..."
-            className="flex-1 py-2.5 border-b border-stone-200 bg-transparent text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 transition-colors text-sm"
+            className="flex-1 py-2.5 border-b border-stone-200 bg-transparent text-stone-800 placeholder-stone-300 focus:outline-none focus:border-stone-500 transition-colors text-base"
           />
           <button
             onClick={createCollection}
