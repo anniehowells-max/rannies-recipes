@@ -5,15 +5,19 @@ import RecipeDetail from './pages/RecipeDetail'
 import AddRecipe from './pages/AddRecipe'
 import EditRecipe from './pages/EditRecipe'
 import GroceryList from './pages/GroceryList'
+import CollectionList from './pages/CollectionList'
+import CollectionDetail from './pages/CollectionDetail'
 import BottomNav from './components/BottomNav'
-import { type Recipe } from './lib/supabase'
+import { type Recipe, type Collection } from './lib/supabase'
 
-type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail'
 
 export default function App() {
   const isAuthed = sessionStorage.getItem('kitchen-auth') === 'true'
   const [screen, setScreen] = useState<Screen>(isAuthed ? 'list' : 'login')
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
+  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [recipeFrom, setRecipeFrom] = useState<'list' | 'collection-detail'>('list')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => { window.scrollTo(0, 0) }, [screen])
@@ -21,6 +25,12 @@ export default function App() {
   function refresh() {
     setRefreshKey(k => k + 1)
     setScreen('list')
+  }
+
+  function openRecipe(recipe: Recipe, from: 'list' | 'collection-detail') {
+    setSelectedRecipe(recipe)
+    setRecipeFrom(from)
+    setScreen('detail')
   }
 
   function renderScreen() {
@@ -31,7 +41,7 @@ export default function App() {
       return (
         <RecipeDetail
           recipe={selectedRecipe}
-          onBack={() => setScreen('list')}
+          onBack={() => setScreen(recipeFrom)}
           onDelete={refresh}
           onEdit={() => setScreen('edit')}
         />
@@ -52,9 +62,25 @@ export default function App() {
     if (screen === 'grocery') {
       return <GroceryList onBack={() => setScreen('list')} />
     }
+    if (screen === 'collections') {
+      return (
+        <CollectionList
+          onSelect={col => { setSelectedCollection(col); setScreen('collection-detail') }}
+        />
+      )
+    }
+    if (screen === 'collection-detail' && selectedCollection) {
+      return (
+        <CollectionDetail
+          collection={selectedCollection}
+          onBack={() => setScreen('collections')}
+          onSelect={recipe => openRecipe(recipe, 'collection-detail')}
+        />
+      )
+    }
     return (
       <RecipeList
-        onSelect={recipe => { setSelectedRecipe(recipe); setScreen('detail') }}
+        onSelect={recipe => openRecipe(recipe, 'list')}
         refreshKey={refreshKey}
       />
     )
@@ -69,6 +95,7 @@ export default function App() {
           onNavigate={s => {
             if (s === 'add') setScreen('add')
             else if (s === 'grocery') setScreen('grocery')
+            else if (s === 'collections') setScreen('collections')
             else setScreen('list')
           }}
         />

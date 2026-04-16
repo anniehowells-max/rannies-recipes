@@ -58,6 +58,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
   const [protein, setProtein] = useState(recipe.protein_g ? String(recipe.protein_g) : '')
   const [carbs, setCarbs] = useState(recipe.carbs_g ? String(recipe.carbs_g) : '')
   const [fat, setFat] = useState(recipe.fat_g ? String(recipe.fat_g) : '')
+  const [fibre, setFibre] = useState(recipe.fibre_g ? String(recipe.fibre_g) : '')
   const [notes, setNotes] = useState(recipe.notes || '')
   const [photoUrl, setPhotoUrl] = useState(recipe.photo_url || '')
   const [photoPreview, setPhotoPreview] = useState(recipe.photo_url || '')
@@ -114,6 +115,7 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
       protein_g: protein ? parseFloat(protein) : null,
       carbs_g: carbs ? parseFloat(carbs) : null,
       fat_g: fat ? parseFloat(fat) : null,
+      fibre_g: fibre ? parseFloat(fibre) : null,
     }
 
     const { data, error: err } = await supabase
@@ -172,12 +174,13 @@ export default function EditRecipe({ recipe, onBack, onSaved }: Props) {
 
           <div>
             <label className={labelClass}>nutrition per portion</label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               {([
                 { label: 'calories', value: calories, set: setCalories, placeholder: '450', unit: 'kcal' },
                 { label: 'protein', value: protein, set: setProtein, placeholder: '32', unit: 'g' },
                 { label: 'carbs', value: carbs, set: setCarbs, placeholder: '58', unit: 'g' },
                 { label: 'fat', value: fat, set: setFat, placeholder: '12', unit: 'g' },
+                { label: 'fibre', value: fibre, set: setFibre, placeholder: '4', unit: 'g' },
               ] as const).map(({ label, value, set, placeholder, unit }) => (
                 <div key={label}>
                   <p className="text-xs text-stone-400 mb-1">{label}</p>

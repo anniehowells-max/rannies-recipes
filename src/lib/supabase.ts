@@ -23,8 +23,15 @@ export type Recipe = {
   protein_g: number | null
   carbs_g: number | null
   fat_g: number | null
+  fibre_g: number | null
   created_at: string
   cook_log?: CookEntry[]
+}
+
+export type Collection = {
+  id: string
+  name: string
+  created_at: string
 }
 
 export type CookEntry = {

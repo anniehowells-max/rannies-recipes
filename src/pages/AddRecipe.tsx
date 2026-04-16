@@ -55,6 +55,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
   const [protein, setProtein] = useState('')
   const [carbs, setCarbs] = useState('')
   const [fat, setFat] = useState('')
+  const [fibre, setFibre] = useState('')
   const [notes, setNotes] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
@@ -144,6 +145,7 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
       protein_g: protein ? parseFloat(protein) : null,
       carbs_g: carbs ? parseFloat(carbs) : null,
       fat_g: fat ? parseFloat(fat) : null,
+      fibre_g: fibre ? parseFloat(fibre) : null,
     })
 
     if (err) {
@@ -218,12 +220,13 @@ export default function AddRecipe({ onBack, onSaved }: Props) {
 
           <div>
             <label className={labelClass}>nutrition per portion</label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-3">
               {([
                 { label: 'calories', value: calories, set: setCalories, placeholder: '450', unit: 'kcal' },
                 { label: 'protein', value: protein, set: setProtein, placeholder: '32', unit: 'g' },
                 { label: 'carbs', value: carbs, set: setCarbs, placeholder: '58', unit: 'g' },
                 { label: 'fat', value: fat, set: setFat, placeholder: '12', unit: 'g' },
+                { label: 'fibre', value: fibre, set: setFibre, placeholder: '4', unit: 'g' },
               ] as const).map(({ label, value, set, placeholder, unit }) => (
                 <div key={label}>
                   <p className="text-xs text-stone-400 mb-1">{label}</p>

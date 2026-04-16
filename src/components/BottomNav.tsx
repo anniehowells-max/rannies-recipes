@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { loadGroceryList } from '../pages/GroceryList'
 
-type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery'
+type Screen = 'login' | 'list' | 'detail' | 'add' | 'edit' | 'grocery' | 'collections' | 'collection-detail'
 
 type Props = {
   screen: Screen
-  onNavigate: (screen: 'list' | 'grocery' | 'add') => void
+  onNavigate: (screen: 'list' | 'grocery' | 'add' | 'collections') => void
 }
 
 export default function BottomNav({ screen, onNavigate }: Props) {
@@ -19,6 +19,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
   }, [screen])
 
   const onRecipes = screen === 'list' || screen === 'detail' || screen === 'edit'
+  const onCollections = screen === 'collections' || screen === 'collection-detail'
   const onGrocery = screen === 'grocery'
 
   return (
@@ -36,6 +37,19 @@ export default function BottomNav({ screen, onNavigate }: Props) {
             <path d="M4 6h16M4 12h16M4 18h10" />
           </svg>
           <span className={`font-ui text-[10px] font-medium tracking-wide ${onRecipes ? 'text-stone-900' : 'text-stone-400'}`}>recipes</span>
+        </button>
+
+        {/* Collections */}
+        <button
+          onClick={() => onNavigate('collections')}
+          className={`flex flex-col items-center gap-1 px-6 py-2 rounded-[20px] transition-all ${
+            onCollections ? 'bg-white/60 shadow-[0_1px_4px_rgba(0,0,0,0.08)]' : 'hover:bg-white/30'
+          }`}
+        >
+          <svg viewBox="0 0 24 24" className={`w-5 h-5 ${onCollections ? 'text-stone-900' : 'text-stone-400'}`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+          </svg>
+          <span className={`font-ui text-[10px] font-medium tracking-wide ${onCollections ? 'text-stone-900' : 'text-stone-400'}`}>collections</span>
         </button>
 
         {/* Add */}
@@ -57,7 +71,7 @@ export default function BottomNav({ screen, onNavigate }: Props) {
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
             <path d="M3 6h18M16 10a4 4 0 01-8 0" />
           </svg>
-          <span className={`font-ui text-[10px] font-medium tracking-wide ${onGrocery ? 'text-stone-900' : 'text-stone-400'}`}>grocery</span>
+          <span className={`font-ui text-[10px] font-medium tracking-wide ${onGrocery ? 'text-stone-900' : 'text-stone-400'}`}>groceries</span>
           {groceryCount > 0 && (
             <span className="absolute top-1 right-3 w-4 h-4 bg-stone-900 text-white text-[9px] rounded-full flex items-center justify-center">
               {groceryCount}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase, type Recipe, type CookEntry } from '../lib/supabase'
+import { supabase, type Recipe, type CookEntry, type Collection } from '../lib/supabase'
 import { addIngredientsToList } from './GroceryList'
 
 type Props = {
@@ -28,6 +28,9 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [editNote, setEditNote] = useState('')
   const [editAuthor, setEditAuthor] = useState('')
   const [editDate, setEditDate] = useState('')
+  const [recipeCollections, setRecipeCollections] = useState<Collection[]>([])
+  const [allCollections, setAllCollections] = useState<Collection[]>([])
+  const [showCollectionPicker, setShowCollectionPicker] = useState(false)
 
   useEffect(() => {
     supabase
@@ -37,6 +40,33 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
       .order('cooked_at', { ascending: false })
       .then(({ data }) => { if (data) setLog(data) })
   }, [recipe.id])
+
+  useEffect(() => {
+    async function loadCollections() {
+      const [{ data: links }, { data: all }] = await Promise.all([
+        supabase.from('collection_recipes').select('collection_id').eq('recipe_id', recipe.id),
+        supabase.from('collections').select('*').order('name'),
+      ])
+      if (all) setAllCollections(all)
+      if (links && all) {
+        const ids = new Set(links.map(l => l.collection_id))
+        setRecipeCollections(all.filter(c => ids.has(c.id)))
+      }
+    }
+    loadCollections()
+  }, [recipe.id])
+
+  async function toggleCollection(col: Collection) {
+    const inCollection = recipeCollections.some(c => c.id === col.id)
+    if (inCollection) {
+      await supabase.from('collection_recipes').delete()
+        .eq('collection_id', col.id).eq('recipe_id', recipe.id)
+      setRecipeCollections(prev => prev.filter(c => c.id !== col.id))
+    } else {
+      await supabase.from('collection_recipes').insert({ collection_id: col.id, recipe_id: recipe.id })
+      setRecipeCollections(prev => [...prev, col])
+    }
+  }
 
   async function addLogEntry() {
     if (!logNote.trim()) return
@@ -385,7 +415,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         )}
 
         {/* Nutrition */}
-        {(recipe.calories_per_portion || recipe.protein_g || recipe.carbs_g || recipe.fat_g) && (() => {
+        {(recipe.calories_per_portion || recipe.protein_g || recipe.carbs_g || recipe.fat_g || recipe.fibre_g) && (() => {
           const scale = recipe.portions ? portions / recipe.portions : 1
           const round = (n: number | null) => n != null ? Math.round(n * scale) : null
           const stats = [
@@ -393,13 +423,14 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             { label: 'protein', value: round(recipe.protein_g), unit: 'g' },
             { label: 'carbs', value: round(recipe.carbs_g), unit: 'g' },
             { label: 'fat', value: round(recipe.fat_g), unit: 'g' },
+            { label: 'fibre', value: round(recipe.fibre_g), unit: 'g' },
           ].filter(s => s.value != null)
           return (
             <div className="py-8 px-6 border-b-2 border-stone-200">
               <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">
                 nutrition per portion{recipe.portions && portions !== recipe.portions ? ` (scaled)` : ''}
               </p>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-5 gap-4">
                 {stats.map(({ label, value, unit }) => (
                   <div key={label} className="text-center">
                     <p className="font-ui text-xl font-semibold text-stone-800">{value}<span className="text-xs text-stone-400 ml-0.5">{unit}</span></p>
@@ -410,6 +441,61 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             </div>
           )
         })()}
+
+        {/* Collections */}
+        <div className="py-8 px-6 border-b-2 border-stone-200">
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">collections</p>
+            <button
+              onClick={() => setShowCollectionPicker(v => !v)}
+              className="text-sm text-stone-500 hover:text-stone-900 transition-colors"
+            >
+              + add to collection
+            </button>
+          </div>
+
+          {showCollectionPicker && (
+            <div className="mb-4 border border-stone-200 rounded-xl overflow-hidden">
+              {allCollections.length === 0 ? (
+                <p className="px-4 py-3 text-sm text-stone-300 italic">no collections yet — create one from the collections page</p>
+              ) : (
+                allCollections.map(col => {
+                  const active = recipeCollections.some(c => c.id === col.id)
+                  return (
+                    <button
+                      key={col.id}
+                      onClick={() => toggleCollection(col)}
+                      className="w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 flex items-center justify-between border-b border-stone-100 last:border-b-0 transition-colors"
+                    >
+                      {col.name}
+                      {active && (
+                        <svg viewBox="0 0 10 8" className="w-3 h-3 flex-shrink-0">
+                          <path d="M1 4l3 3 5-6" stroke="#1c1917" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          )}
+
+          {recipeCollections.length === 0 ? (
+            <p className="text-stone-300 text-sm italic">not in any collections</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {recipeCollections.map(col => (
+                <span key={col.id} className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-full px-3 py-1.5">
+                  <span className="font-ui text-xs text-stone-700">{col.name}</span>
+                  <button
+                    onClick={() => toggleCollection(col)}
+                    className="text-stone-300 hover:text-stone-600 transition-colors leading-none"
+                  >×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Cooking log */}
         <div className="py-8 pb-16 px-6">
