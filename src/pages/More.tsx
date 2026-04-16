@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 async function gunzip(data: Uint8Array): Promise<string> {
   const ds = new DecompressionStream('gzip')
   const writer = ds.writable.getWriter()
-  writer.write(data)
+  writer.write(data as BufferSource)
   writer.close()
   const chunks: Uint8Array[] = []
   const reader = ds.readable.getReader()
