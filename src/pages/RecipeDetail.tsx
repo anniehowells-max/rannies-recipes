@@ -19,6 +19,9 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [logError, setLogError] = useState('')
   const [saving, setSaving] = useState(false)
   const [addedToGrocery, setAddedToGrocery] = useState(false)
+  const [units, setUnits] = useState<'metric' | 'imperial'>(() =>
+    (localStorage.getItem('kitchen-units') as 'metric' | 'imperial') || 'metric'
+  )
   const [addingLog, setAddingLog] = useState(false)
   const [logDate, setLogDate] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -132,6 +135,50 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     )
   }
 
+  function convertToImperial(s: string): string {
+    const unicodeFracs: Record<string, number> = { '½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875 }
+    const uf = '[½¼¾⅓⅔⅛⅜⅝⅞]'
+    // Matches: "2 ½", "2 1/2", "1/2", "½", "2.5", "2"
+    const numPat = `(?:\\d+\\s+\\d+\\/\\d+|\\d+\\s+${uf}|\\d+(?:\\.\\d+)?|\\d+\\/\\d+|${uf})`
+
+    function parseAmt(n: string): number {
+      const mixedUni = n.match(/^(\d+)\s+([½¼¾⅓⅔⅛⅜⅝⅞])$/)
+      if (mixedUni) return parseInt(mixedUni[1]) + (unicodeFracs[mixedUni[2]] ?? 0)
+      const mixedFrac = n.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+      if (mixedFrac) return parseInt(mixedFrac[1]) + parseInt(mixedFrac[2]) / parseInt(mixedFrac[3])
+      const frac = n.match(/^(\d+)\/(\d+)$/)
+      if (frac) return parseInt(frac[1]) / parseInt(frac[2])
+      if (unicodeFracs[n]) return unicodeFracs[n]
+      return parseFloat(n)
+    }
+
+    const re = (unit: string) => new RegExp(`(${numPat})\\s*${unit}\\b`, 'gi')
+    return s
+      .replace(re('kg'), (_, n) => `${formatAmount(parseAmt(n) * 2.20462)}lbs`)
+      .replace(re('g'), (_, n) => {
+        const g = parseAmt(n)
+        return g >= 454 ? `${formatAmount(g / 453.592)}lbs` : `${formatAmount(g / 28.3495)}oz`
+      })
+      .replace(re('l'), (_, n) => `${formatAmount(parseAmt(n) * 4.22675)} cups`)
+      .replace(re('ml'), (_, n) => {
+        const ml = parseAmt(n)
+        return ml >= 240 ? `${formatAmount(ml / 236.588)} cups` : `${formatAmount(ml / 29.5735)} fl oz`
+      })
+      .replace(re('dl'), (_, n) => `${formatAmount(parseAmt(n) * 3.3814)} fl oz`)
+      .replace(re('cl'), (_, n) => `${formatAmount(parseAmt(n) * 0.33814)} fl oz`)
+  }
+
+  function displayIngredient(ingredient: string): string {
+    const scaled = scaleIngredient(ingredient)
+    return units === 'imperial' ? convertToImperial(scaled) : scaled
+  }
+
+  function toggleUnits() {
+    const next = units === 'metric' ? 'imperial' : 'metric'
+    setUnits(next)
+    localStorage.setItem('kitchen-units', next)
+  }
+
   function formatTime(mins: number): string {
     const h = Math.floor(mins / 60)
     const m = mins % 60
@@ -232,24 +279,36 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         <div className="py-8 px-6 border-b-2 border-stone-200">
           <div className="flex items-center justify-between mb-5">
             <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
-            {recipe.portions && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
-                  <button onClick={() => setPortions(p => Math.max(1, p - 1))}
-                    className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">−</button>
-                  <span className="text-sm font-medium w-6 text-center">{portions}</span>
-                  <button onClick={() => setPortions(p => p + 1)}
-                    className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">+</button>
-                </div>
-                <span className="text-xs text-stone-400">portions</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center rounded-full border border-stone-200 p-0.5">
+                <button onClick={() => { if (units !== 'metric') toggleUnits() }}
+                  className={`font-ui text-[10px] tracking-wider uppercase px-3 py-1 rounded-full transition-colors ${units === 'metric' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
+                  metric
+                </button>
+                <button onClick={() => { if (units !== 'imperial') toggleUnits() }}
+                  className={`font-ui text-[10px] tracking-wider uppercase px-3 py-1 rounded-full transition-colors ${units === 'imperial' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
+                  imperial
+                </button>
               </div>
-            )}
+              {recipe.portions && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center border border-stone-200 rounded-full px-1 py-1 gap-1">
+                    <button onClick={() => setPortions(p => Math.max(1, p - 1))}
+                      className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">−</button>
+                    <span className="text-sm font-medium w-6 text-center">{portions}</span>
+                    <button onClick={() => setPortions(p => p + 1)}
+                      className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors text-base">+</button>
+                  </div>
+                  <span className="text-xs text-stone-400">portions</span>
+                </div>
+              )}
+            </div>
           </div>
           <ul className="space-y-2.5 mb-5">
             {(recipe.ingredients || []).map((ing, i) => (
               <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                 <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
-                {scaleIngredient(ing)}
+                {displayIngredient(ing)}
               </li>
             ))}
           </ul>
@@ -261,7 +320,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                 {(recipe.to_serve || []).map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-base text-stone-700">
                     <span className="w-1 h-1 rounded-full bg-stone-800 flex-shrink-0 mt-2.5" />
-                    {scaleIngredient(item)}
+                    {displayIngredient(item)}
                   </li>
                 ))}
               </ul>
