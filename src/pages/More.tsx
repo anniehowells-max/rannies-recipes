@@ -196,9 +196,15 @@ export default function More() {
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
             if (Array.isArray(raw.ingredients))
-              recipe.ingredients = raw.ingredients.map((i: Record<string, unknown>) => String(i.name ?? i)).filter(Boolean)
+              recipe.ingredients = raw.ingredients
+                .map((i: Record<string, unknown>) =>
+                  [i.quantity, i.unit, i.name].filter(Boolean).map(String).join(' ').trim()
+                )
+                .filter(Boolean)
             if (Array.isArray(raw.steps))
-              recipe.steps = raw.steps.map((s: Record<string, unknown>) => String(s.directions ?? s)).filter(Boolean)
+              recipe.steps = raw.steps
+                .map((s: Record<string, unknown>) => String(s.directions ?? '').trim())
+                .filter(Boolean)
             if (raw.notes) recipe.notes = String(raw.notes)
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
