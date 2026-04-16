@@ -196,7 +196,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
       {/* Top nav */}
       <div className="border-b border-stone-100">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl md:max-w-none mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
           <button onClick={onBack} className="px-4 py-2.5 text-sm text-stone-500 hover:text-stone-800 transition-colors">
             ← back
           </button>
@@ -207,17 +207,18 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
       </div>
 
-      {/* Hero image */}
-      {recipe.photo_url ? (
-        <img src={recipe.photo_url} alt={recipe.title} className="w-full h-72 object-cover" />
-      ) : (
-        <div className="w-full h-48 bg-stone-50 flex items-center justify-center text-6xl">🍽️</div>
-      )}
+      {/* Hero: image left, title right on landscape */}
+      <div className="lg:flex border-b-2 border-stone-200">
 
-      <div className="max-w-2xl mx-auto">
+        {/* Image */}
+        {recipe.photo_url ? (
+          <img src={recipe.photo_url} alt={recipe.title} className="w-full h-72 object-cover lg:w-1/2 lg:h-auto lg:max-h-[480px]" />
+        ) : (
+          <div className="w-full h-48 bg-stone-50 flex items-center justify-center text-6xl lg:w-1/2">🍽️</div>
+        )}
 
         {/* Title block */}
-        <div className="py-8 px-6 border-b-2 border-stone-200">
+        <div className="py-8 px-6 border-b-2 border-stone-200 lg:border-b-0 lg:w-1/2 lg:flex lg:flex-col lg:justify-center">
           <h1 className="font-serif text-5xl font-medium tracking-tight leading-tight mb-4">{recipe.title}</h1>
 
           {/* Meta row: time + stars */}
@@ -275,8 +276,15 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           )}
         </div>
 
+      </div>{/* end hero */}
+
+      <div className="max-w-2xl md:max-w-none mx-auto">
+
+        {/* Ingredients + Method two-column on iPad+ */}
+        <div className="md:grid md:grid-cols-2 md:divide-x-2 md:divide-stone-200 border-b-2 border-stone-200">
+
         {/* Ingredients */}
-        <div className="py-8 px-6 border-b-2 border-stone-200">
+        <div className="py-8 px-6 border-b-2 border-stone-200 md:border-b-0">
           <div className="flex items-center justify-between mb-5">
             <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500">ingredients</p>
             <div className="flex items-center gap-3">
@@ -343,7 +351,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
         </div>
 
         {/* Method */}
-        <div className="py-8 px-6 border-b-2 border-stone-200">
+        <div className="py-8 px-6">
           <p className="font-ui text-xs tracking-[0.2em] uppercase text-stone-500 mb-5">method</p>
           <ol className="space-y-5">
             {(recipe.steps || []).map((step, i) => (
@@ -356,6 +364,8 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
             ))}
           </ol>
         </div>
+
+        </div>{/* end ingredients+method grid */}
 
         {/* Notes */}
         {recipe.notes && (
