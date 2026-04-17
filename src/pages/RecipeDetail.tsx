@@ -251,17 +251,10 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
       .replace(re('fl\\s?oz'), (_, n) => `${roundMetric(parseAmt(n) * 29.5735)}ml`)
   }
 
-  function detectUnits(ingredient: string): 'metric' | 'imperial' | 'none' {
-    if (/\b(kg|g|ml|dl|cl|litres?|liters?|l)\b/i.test(ingredient)) return 'metric'
-    if (/\b(lbs?|oz|cups?|fl\s?oz)\b/i.test(ingredient)) return 'imperial'
-    return 'none'
-  }
-
   function displayIngredient(ingredient: string): string {
     const scaled = scaleIngredient(ingredient)
-    const recipeUnits = detectUnits(scaled)
-    if (units === 'imperial' && recipeUnits === 'metric') return convertToImperial(scaled)
-    if (units === 'metric' && recipeUnits === 'imperial') return convertToMetric(scaled)
+    if (units === 'imperial') return convertToImperial(scaled)
+    if (units === 'metric') return convertToMetric(scaled)
     return scaled
   }
 
