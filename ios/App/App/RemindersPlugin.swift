@@ -119,3 +119,13 @@ public class RemindersPlugin: CAPPlugin {
         }
     }
 }
+
+extension RemindersPlugin {
+    override public static func pluginMethods() -> [CAPPluginMethod] {
+        return [
+            CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
+            CAPPluginMethod(name: "syncItems", returnType: CAPPluginReturnPromise),
+            CAPPluginMethod(name: "getCompletions", returnType: CAPPluginReturnPromise),
+        ]
+    }
+}
