@@ -211,7 +211,7 @@ export default function More() {
             if (raw.notes) recipe.notes = String(raw.notes)
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
-            if (raw.serves) recipe.serves = raw.serves
+            if (raw.serves) recipe.portions = raw.serves
             if (Array.isArray(raw.images) && raw.images.length > 0) {
               const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
               const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
