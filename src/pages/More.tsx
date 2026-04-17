@@ -197,12 +197,13 @@ export default function More() {
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
-            console.log('ingredient sample:', JSON.stringify(raw.ingredients?.[0]))
             if (Array.isArray(raw.ingredients))
               recipe.ingredients = raw.ingredients
-                .map((i: Record<string, unknown>) =>
-                  [i.quantity, i.unit, i.name].filter(Boolean).map(String).join(' ').trim()
-                )
+                .map((i: Record<string, unknown>) => {
+                  const ing = i.ingredient as Record<string, unknown>
+                  const qty = i.quantity as Record<string, unknown>
+                  return [qty?.amount, qty?.quantityType, ing?.name].filter(Boolean).map(String).join(' ').trim()
+                })
                 .filter(Boolean)
             if (Array.isArray(raw.steps))
               recipe.steps = raw.steps
