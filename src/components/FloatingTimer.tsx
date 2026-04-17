@@ -4,12 +4,13 @@ type Timer = {
   id: number
   totalSeconds: number
   secondsLeft: number
+  endTime: number | null   // Date.now() ms target — null when paused/idle
   isRunning: boolean
   isDone: boolean
 }
 
 function makeTimer(id: number, seconds = 5 * 60): Timer {
-  return { id, totalSeconds: seconds, secondsLeft: seconds, isRunning: false, isDone: false }
+  return { id, totalSeconds: seconds, secondsLeft: seconds, endTime: null, isRunning: false, isDone: false }
 }
 
 function playChime() {
@@ -37,6 +38,18 @@ function playChime() {
   } catch { /* AudioContext may be blocked until user gesture */ }
 }
 
+function fireAlert() {
+  playChime()
+  navigator.vibrate?.([500, 200, 500, 200, 500, 200, 500])
+}
+
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission()
+  }
+}
+
 function fmt(s: number) {
   const m = Math.floor(s / 60)
   const sec = s % 60
@@ -50,7 +63,7 @@ export default function FloatingTimer({ onClose }: Props) {
   const [nextId, setNextId] = useState(2)
   const [pos, setPos] = useState(() => ({
     x: Math.max(12, window.innerWidth - 268),
-    y: Math.max(80, window.innerHeight - 300),
+    y: Math.max(80, window.innerHeight - 360),
   }))
   const [snapping, setSnapping] = useState(false)
   const [flashIds, setFlashIds] = useState<Set<number>>(new Set())
@@ -58,28 +71,71 @@ export default function FloatingTimer({ onClose }: Props) {
   const timersRef = useRef(timers)
   useEffect(() => { timersRef.current = timers }, [timers])
 
+  // Notification timeout IDs keyed by timer id — so we can cancel on pause/reset
+  const notifTimeoutsRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
+
   const dragRef = useRef({ active: false, startX: 0, startY: 0, origX: 0, origY: 0 })
 
-  // Single master interval — reads from ref so closure is never stale
+  function markDone(timerId: number) {
+    fireAlert()
+    if (Notification.permission === 'granted') {
+      new Notification('Timer done! 🍳', { body: 'Your kitchen timer has finished.', silent: false })
+    }
+    setFlashIds(f => new Set(f).add(timerId))
+    setTimeout(() => setFlashIds(f => { const n = new Set(f); n.delete(timerId); return n }), 4000)
+  }
+
+  // Master interval — uses endTime so it self-corrects after tab throttling
   useEffect(() => {
     const id = setInterval(() => {
-      const updated = timersRef.current.map(t => {
-        if (!t.isRunning) return t
-        if (t.secondsLeft <= 1) {
-          playChime()
-          setFlashIds(f => new Set(f).add(t.id))
-          setTimeout(() => setFlashIds(f => { const n = new Set(f); n.delete(t.id); return n }), 4000)
-          return { ...t, secondsLeft: 0, isRunning: false, isDone: true }
+      const now = Date.now()
+      setTimers(prev => prev.map(t => {
+        if (!t.isRunning || !t.endTime) return t
+        const remaining = Math.max(0, Math.round((t.endTime - now) / 1000))
+        if (remaining <= 0) {
+          markDone(t.id)
+          clearNotification(t.id)
+          return { ...t, secondsLeft: 0, isRunning: false, endTime: null, isDone: true }
         }
-        return { ...t, secondsLeft: t.secondsLeft - 1 }
-      })
-      setTimers(updated)
+        return { ...t, secondsLeft: remaining }
+      }))
     }, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function updateTimer(id: number, patch: Partial<Timer>) {
-    setTimers(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
+  // Catch up when the user returns to the tab after the browser throttled the interval
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== 'visible') return
+      const now = Date.now()
+      setTimers(prev => prev.map(t => {
+        if (!t.isRunning || !t.endTime) return t
+        const remaining = Math.max(0, Math.round((t.endTime - now) / 1000))
+        if (remaining <= 0) {
+          markDone(t.id)
+          clearNotification(t.id)
+          return { ...t, secondsLeft: 0, isRunning: false, endTime: null, isDone: true }
+        }
+        return { ...t, secondsLeft: remaining }
+      }))
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function clearNotification(id: number) {
+    if (notifTimeoutsRef.current[id]) {
+      clearTimeout(notifTimeoutsRef.current[id])
+      delete notifTimeoutsRef.current[id]
+    }
+  }
+
+  function scheduleNotification(timerId: number, ms: number) {
+    clearNotification(timerId)
+    if (Notification.permission !== 'granted') return
+    notifTimeoutsRef.current[timerId] = setTimeout(() => {
+      new Notification('Timer done! 🍳', { body: 'Your kitchen timer has finished.', silent: false })
+    }, ms)
   }
 
   function adjustTime(id: number, deltaSecs: number) {
@@ -91,17 +147,31 @@ export default function FloatingTimer({ onClose }: Props) {
   }
 
   function toggleRunning(id: number) {
-    setTimers(prev => prev.map(t =>
-      t.id === id && !t.isDone ? { ...t, isRunning: !t.isRunning } : t
-    ))
+    setTimers(prev => prev.map(t => {
+      if (t.id !== id || t.isDone) return t
+      if (t.isRunning) {
+        // Pause — cancel pending notification
+        clearNotification(id)
+        return { ...t, isRunning: false, endTime: null }
+      } else {
+        // Start — record end timestamp and schedule notification
+        const endTime = Date.now() + t.secondsLeft * 1000
+        requestNotificationPermission().then(() => scheduleNotification(id, t.secondsLeft * 1000))
+        return { ...t, isRunning: true, endTime }
+      }
+    }))
   }
 
   function resetTimer(id: number) {
-    updateTimer(id, { secondsLeft: timers.find(t => t.id === id)!.totalSeconds, isRunning: false, isDone: false })
+    clearNotification(id)
+    setTimers(prev => prev.map(t =>
+      t.id === id ? { ...t, secondsLeft: t.totalSeconds, isRunning: false, endTime: null, isDone: false } : t
+    ))
     setFlashIds(f => { const n = new Set(f); n.delete(id); return n })
   }
 
   function removeTimer(id: number) {
+    clearNotification(id)
     const remaining = timers.filter(t => t.id !== id)
     if (remaining.length === 0) { onClose(); return }
     setTimers(remaining)
