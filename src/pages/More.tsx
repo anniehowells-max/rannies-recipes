@@ -190,14 +190,10 @@ export default function More() {
       if (crumbFiles.length > 0) {
         const toInsert: Record<string, unknown>[] = []
         const parseErrors: string[] = []
-        console.log('starting crouton import')
         for (const crumbFile of crumbFiles) {
-          console.log('processing file:', crumbFile.name)
           try {
             const text = await crumbFile.async('text')
-            console.log('raw content start:', text.slice(0, 200))
             const raw = JSON.parse(text)
-            console.log('keys:', Object.keys(raw))
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
@@ -207,9 +203,9 @@ export default function More() {
                   [i.quantity, i.unit, i.name].filter(Boolean).map(String).join(' ').trim()
                 )
                 .filter(Boolean)
-            if (Array.isArray(raw.method))
-              recipe.steps = raw.method
-                .map((s: Record<string, unknown>) => String(s.directions ?? '').trim())
+            if (Array.isArray(raw.steps))
+              recipe.steps = raw.steps
+                .map((s: Record<string, unknown>) => String(s.step ?? '').trim())
                 .filter(Boolean)
             if (raw.notes) recipe.notes = String(raw.notes)
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
