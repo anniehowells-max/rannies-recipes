@@ -168,19 +168,22 @@ type Props = {
   onBack: () => void
 }
 
+const REMINDERS_PERMISSION_KEY = 'reminders-permission'
+
 export default function GroceryList({ onBack }: Props) {
   const [items, setItems] = useState<GroceryItem[]>([])
-  const [remindersEnabled, setRemindersEnabled] = useState(false)
+  const [remindersEnabled, setRemindersEnabled] = useState(
+    () => localStorage.getItem(REMINDERS_PERMISSION_KEY) === 'granted'
+  )
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
-  // On mount: request permission, then pull latest completions from Reminders
+  // On mount: if permission already granted, pull latest completions from Reminders
   useEffect(() => {
     async function init() {
-      const granted = await requestRemindersPermission()
-      setRemindersEnabled(granted)
       let loaded = loadGroceryList()
-      if (granted) loaded = await pullCompletionsFromReminders(loaded)
+      if (remindersEnabled) loaded = await pullCompletionsFromReminders(loaded)
       setItems(loaded)
-      if (granted) saveGroceryList(loaded)
+      if (remindersEnabled) saveGroceryList(loaded)
     }
     init()
   }, [])
@@ -214,14 +217,22 @@ export default function GroceryList({ onBack }: Props) {
   async function handleSync() {
     setSyncing(true)
     setSyncDone(false)
-    if (!remindersEnabled) {
+    setPermissionDenied(false)
+
+    let enabled = remindersEnabled
+    if (!enabled) {
       const granted = await requestRemindersPermission()
+      localStorage.setItem(REMINDERS_PERMISSION_KEY, granted ? 'granted' : 'denied')
       setRemindersEnabled(granted)
-      if (!granted) {
-        setSyncing(false)
-        return
-      }
+      enabled = granted
     }
+
+    if (!enabled) {
+      setSyncing(false)
+      setPermissionDenied(true)
+      return
+    }
+
     const pulled = await pullCompletionsFromReminders(items)
     setItems(pulled)
     saveGroceryList(pulled)
@@ -264,6 +275,9 @@ export default function GroceryList({ onBack }: Props) {
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         <h1 className="font-serif text-4xl font-medium tracking-tight mb-8">Grocery list</h1>
+        {permissionDenied && (
+          <p className="text-sm text-red-500 mb-6">Please enable Reminders access in iOS Settings → Our Kitchen</p>
+        )}
 
         {items.length === 0 ? (
           <p className="text-stone-300 text-sm italic">nothing here yet — add ingredients from a recipe</p>

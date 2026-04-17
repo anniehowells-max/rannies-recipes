@@ -15,7 +15,7 @@ function isNative(): boolean {
 }
 
 export async function requestRemindersPermission(): Promise<boolean> {
-  if (!isNative()) return false
+  if (!isNative()) { console.log('[Reminders] not native, skipping'); return false }
   try {
     const { granted } = await RemindersPlugin.requestPermission()
     return granted
