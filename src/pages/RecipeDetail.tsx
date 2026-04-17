@@ -205,7 +205,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
       return parseFloat(n)
     }
 
-    const re = (unit: string) => new RegExp(`(${numPat})\\s*${unit}\\b`, 'gi')
+    const re = (unit: string) => new RegExp(`(${numPat})\\s*(?:${unit})\\b`, 'gi')
     return s
       .replace(re('kg'), (_, n) => `${formatAmount(parseAmt(n) * 2.20462)}lbs`)
       .replace(re('g'), (_, n) => {
@@ -243,7 +243,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
       return String(Math.round(val * 10) / 10)
     }
 
-    const re = (unit: string) => new RegExp(`(${numPat})\\s*${unit}\\b`, 'gi')
+    const re = (unit: string) => new RegExp(`(${numPat})\\s*(?:${unit})\\b`, 'gi')
     return s
       .replace(re('lbs?'), (_, n) => `${roundMetric(parseAmt(n) * 453.592)}g`)
       .replace(re('oz'), (_, n) => `${roundMetric(parseAmt(n) * 28.3495)}g`)
