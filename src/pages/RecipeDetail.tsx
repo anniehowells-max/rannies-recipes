@@ -212,7 +212,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
         const g = parseAmt(n)
         return g >= 454 ? `${formatAmount(g / 453.592)}lbs` : `${formatAmount(g / 28.3495)}oz`
       })
-      .replace(re('l'), (_, n) => `${formatAmount(parseAmt(n) * 4.22675)} cups`)
+      .replace(re('litres?|liters?|l'), (_, n) => `${formatAmount(parseAmt(n) * 4.22675)} cups`)
       .replace(re('ml'), (_, n) => {
         const ml = parseAmt(n)
         return ml >= 240 ? `${formatAmount(ml / 236.588)} cups` : `${formatAmount(ml / 29.5735)} fl oz`
@@ -249,13 +249,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
       .replace(re('oz'), (_, n) => `${roundMetric(parseAmt(n) * 28.3495)}g`)
       .replace(re('cups?'), (_, n) => `${roundMetric(parseAmt(n) * 236.588)}ml`)
       .replace(re('fl\\s?oz'), (_, n) => `${roundMetric(parseAmt(n) * 29.5735)}ml`)
-      .replace(re('tbsp'), (_, n) => `${roundMetric(parseAmt(n) * 14.7868)}ml`)
-      .replace(re('tsp'), (_, n) => `${roundMetric(parseAmt(n) * 4.92892)}ml`)
   }
 
   function detectUnits(ingredient: string): 'metric' | 'imperial' | 'none' {
-    if (/\b(kg|g|ml|dl|cl|l)\b/i.test(ingredient)) return 'metric'
-    if (/\b(lbs?|oz|cups?|fl\s?oz|tbsp|tsp)\b/i.test(ingredient)) return 'imperial'
+    if (/\b(kg|g|ml|dl|cl|litres?|liters?|l)\b/i.test(ingredient)) return 'metric'
+    if (/\b(lbs?|oz|cups?|fl\s?oz)\b/i.test(ingredient)) return 'imperial'
     return 'none'
   }
 
@@ -269,7 +267,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
 
   function formatIngredient(text: string) {
     // Match leading number/fraction and optional unit, e.g. "110g", "2 tbsp", "1/2 tsp", "½ cup"
-    const match = text.match(/^(\d+(?:[.,]\d+)?(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg\b|g\b|ml\b|dl\b|cl\b|tbsp\b|tsp\b|cups?\b|fl\s?oz\b|oz\b|lbs?\b|lb\b|pinch\b|handful\b|bunch\b|slices?\b|cans?\b|l(?=[\s,]|$)))?/i)
+    const match = text.match(/^(\d+(?:[.,]\d+)?(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg\b|g\b|ml\b|dl\b|cl\b|litres?\b|liters?\b|tbsp\b|tsp\b|cups?\b|fl\s?oz\b|oz\b|lbs?\b|lb\b|pinch\b|handful\b|bunch\b|slices?\b|cans?\b|l(?=[\s,]|$)))?/i)
     if (!match || !match[0]) return <>{text}</>
     const bold = match[0]
     const rest = text.slice(bold.length)
