@@ -183,6 +183,12 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
   function scaleIngredient(ingredient: string): string {
     if (!recipe.portions) return ingredient
     const factor = portions / recipe.portions
+    // Handle ranges like "2-3", "2 - 3", "2–3" (en dash), "2—3" (em dash) — scale both ends
+    if (/^\d+(?:[.,]\d+)?\s*[-–—]\s*\d+(?:[.,]\d+)?/.test(ingredient)) {
+      return ingredient.replace(/^(\d+(?:[.,]\d+)?)\s*[-–—]\s*(\d+(?:[.,]\d+)?)/, (_, a, b) =>
+        `${formatAmount(parseFraction(a) * factor)}-${formatAmount(parseFraction(b) * factor)}`
+      )
+    }
     return ingredient.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)/, match =>
       formatAmount(parseFraction(match) * factor)
     )
@@ -245,14 +251,20 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
 
     const re = (unit: string) => new RegExp(`(${numPat})\\s*(?:${unit})\\b`, 'gi')
     return s
-      .replace(re('lbs?'), (_, n) => `${roundMetric(parseAmt(n) * 453.592)}g`)
+      .replace(re('pounds?|lbs?'), (_, n) => `${roundMetric(parseAmt(n) * 453.592)}g`)
       .replace(re('oz'), (_, n) => `${roundMetric(parseAmt(n) * 28.3495)}g`)
       .replace(re('cups?'), (_, n) => `${roundMetric(parseAmt(n) * 236.588)}ml`)
       .replace(re('fl\\s?oz'), (_, n) => `${roundMetric(parseAmt(n) * 29.5735)}ml`)
   }
 
+  function normaliseUnits(s: string): string {
+    return s
+      .replace(/\btablespoons?\b/gi, 'tbsp')
+      .replace(/\bteaspoons?\b/gi, 'tsp')
+  }
+
   function displayIngredient(ingredient: string): string {
-    const scaled = scaleIngredient(ingredient)
+    const scaled = normaliseUnits(scaleIngredient(ingredient))
     if (units === 'imperial') return convertToImperial(scaled)
     if (units === 'metric') return convertToMetric(scaled)
     return scaled
@@ -260,11 +272,11 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
 
   function formatIngredient(text: string) {
     // Match leading number/fraction and optional unit, e.g. "110g", "2 tbsp", "1/2 tsp", "½ cup"
-    const match = text.match(/^(\d+(?:[.,]\d+)?(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg\b|g\b|ml\b|dl\b|cl\b|litres?\b|liters?\b|tbsp\b|tsp\b|cups?\b|fl\s?oz\b|oz\b|lbs?\b|lb\b|pinch\b|handful\b|bunch\b|slices?\b|cans?\b|l(?=[\s,]|$)))?/i)
+    const match = text.match(/^(\d+(?:[.,]\d+)?\s*[-–—]\s*\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg\b|g\b|ml\b|dl\b|cl\b|litres?\b|liters?\b|tbsp\b|tsp\b|cups?\b|fl\s?oz\b|oz\b|lbs?\b|lb\b|pounds?\b|pinch\b|handful\b|bunch\b|slices?\b|cans?\b|l(?=[\s,]|$)))?/i)
     if (!match || !match[0]) return <>{text}</>
     const bold = match[0]
     const rest = text.slice(bold.length)
-    return <><span className="font-semibold">{bold}</span>{rest}</>
+    return <><span className="font-semibold whitespace-nowrap">{bold}</span>{rest}</>
   }
 
   function toggleUnits() {

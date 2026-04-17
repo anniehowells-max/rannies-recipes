@@ -7,7 +7,7 @@
     font-family: 'Lora', serif;
     @apply bg-stone-50 text-stone-800;
     color-scheme: light;
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(0px, calc(env(safe-area-inset-top) - 10px));
   }
 
   input[type="date"] {

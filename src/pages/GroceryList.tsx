@@ -1,4 +1,9 @@
 import { useState, useEffect } from 'react'
+import {
+  requestRemindersPermission,
+  syncGroceriesToReminders,
+  pullCompletionsFromReminders,
+} from '../lib/reminders'
 
 export type GroceryItem = {
   id: string
@@ -165,33 +170,42 @@ type Props = {
 
 export default function GroceryList({ onBack }: Props) {
   const [items, setItems] = useState<GroceryItem[]>([])
+  const [remindersEnabled, setRemindersEnabled] = useState(false)
 
+  // On mount: request permission, then pull latest completions from Reminders
   useEffect(() => {
-    setItems(loadGroceryList())
+    async function init() {
+      const granted = await requestRemindersPermission()
+      setRemindersEnabled(granted)
+      let loaded = loadGroceryList()
+      if (granted) loaded = await pullCompletionsFromReminders(loaded)
+      setItems(loaded)
+      if (granted) saveGroceryList(loaded)
+    }
+    init()
   }, [])
 
-  function toggle(id: string) {
-    const updated = items.map(item => item.id === id ? { ...item, checked: !item.checked } : item)
+  function updateItems(updated: GroceryItem[]) {
     setItems(updated)
     saveGroceryList(updated)
+    if (remindersEnabled) syncGroceriesToReminders(updated)
+  }
+
+  function toggle(id: string) {
+    updateItems(items.map(item => item.id === id ? { ...item, checked: !item.checked } : item))
   }
 
   function deleteItem(id: string) {
-    const updated = items.filter(item => item.id !== id)
-    setItems(updated)
-    saveGroceryList(updated)
+    updateItems(items.filter(item => item.id !== id))
   }
 
   function clearChecked() {
-    const updated = items.filter(item => !item.checked)
-    setItems(updated)
-    saveGroceryList(updated)
+    updateItems(items.filter(item => !item.checked))
   }
 
   function clearAll() {
     if (!confirm('Clear everything from your grocery list?')) return
-    setItems([])
-    saveGroceryList([])
+    updateItems([])
   }
 
   const checkedCount = items.filter(i => i.checked).length
