@@ -202,7 +202,17 @@ export default function More() {
                 .map((i: Record<string, unknown>) => {
                   const ing = i.ingredient as Record<string, unknown>
                   const qty = i.quantity as Record<string, unknown>
-                  return [qty?.amount, qty?.quantityType, ing?.name].filter(Boolean).map(String).join(' ').trim()
+                  const unitMap: Record<string, string> = {
+                    TEASPOON: 'tsp', TABLESPOON: 'tbsp', CUP: 'cup',
+                    GRAM: 'g', KILOGRAM: 'kg',
+                    MILLILITER: 'ml', MILLILITRE: 'ml',
+                    LITER: 'l', LITRE: 'l',
+                    OUNCE: 'oz', POUND: 'lb',
+                    ITEM: '',
+                  }
+                  const rawUnit = qty?.quantityType ? String(qty.quantityType).toUpperCase() : ''
+                  const unit = rawUnit in unitMap ? unitMap[rawUnit] : rawUnit.toLowerCase()
+                  return [qty?.amount, unit || undefined, ing?.name].filter(Boolean).map(String).join(' ').trim()
                 })
                 .filter(Boolean)
             if (Array.isArray(raw.steps))
