@@ -224,10 +224,8 @@ export default function More() {
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
             if (raw.serves) recipe.portions = raw.serves
-            const prepMins = raw.duration ? Math.round(Number(raw.duration) / 60) : 0
-            recipe.prep_time_mins = prepMins || null
-            const cookMins = raw.cookingDuration ? Math.round(Number(raw.cookingDuration) / 60) : 0
-            recipe.cook_time_mins = cookMins || null
+            recipe.prep_time_mins = Number(raw.duration) || null
+            recipe.cook_time_mins = Number(raw.cookingDuration) || null
             if (Array.isArray(raw.images) && raw.images.length > 0) {
               try {
                 const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
