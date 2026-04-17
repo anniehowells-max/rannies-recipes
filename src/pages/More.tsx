@@ -190,7 +190,9 @@ export default function More() {
       if (crumbFiles.length > 0) {
         const toInsert: Record<string, unknown>[] = []
         const parseErrors: string[] = []
+        console.log('starting crouton import')
         for (const crumbFile of crumbFiles) {
+          console.log('processing file:', crumbFile.name)
           try {
             // Try plain text first; fall back to gzip if it fails
             let text: string
