@@ -202,6 +202,7 @@ export default function More() {
               text = await gunzip(compressed)
             }
             const raw = JSON.parse(text)
+            console.log(Object.keys(raw))
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
