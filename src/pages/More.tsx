@@ -197,6 +197,7 @@ export default function More() {
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
+            console.log('ingredient sample:', JSON.stringify(raw.ingredients?.[0]))
             if (Array.isArray(raw.ingredients))
               recipe.ingredients = raw.ingredients
                 .map((i: Record<string, unknown>) =>
@@ -210,6 +211,21 @@ export default function More() {
             if (raw.notes) recipe.notes = String(raw.notes)
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
+            if (raw.serves) recipe.serves = raw.serves
+            if (Array.isArray(raw.images) && raw.images.length > 0) {
+              const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
+              const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+              const filename = `${Date.now()}.jpg`
+              const { data: uploadData } = await supabase.storage
+                .from('recipe-photos')
+                .upload(filename, bytes, { contentType: 'image/jpeg' })
+              if (uploadData) {
+                const { data: urlData } = supabase.storage
+                  .from('recipe-photos')
+                  .getPublicUrl(uploadData.path)
+                recipe.photo_url = urlData.publicUrl
+              }
+            }
             toInsert.push(recipe)
           } catch (err) {
             parseErrors.push(`${crumbFile.name}: ${(err as Error).message}`)
