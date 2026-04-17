@@ -214,6 +214,14 @@ export default function GroceryList({ onBack }: Props) {
   async function handleSync() {
     setSyncing(true)
     setSyncDone(false)
+    if (!remindersEnabled) {
+      const granted = await requestRemindersPermission()
+      setRemindersEnabled(granted)
+      if (!granted) {
+        setSyncing(false)
+        return
+      }
+    }
     const pulled = await pullCompletionsFromReminders(items)
     setItems(pulled)
     saveGroceryList(pulled)
@@ -237,11 +245,9 @@ export default function GroceryList({ onBack }: Props) {
             ← back
           </button>
           <div className="flex gap-2">
-            {remindersEnabled && (
-              <button onClick={handleSync} disabled={syncing} className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm rounded-lg transition-colors disabled:opacity-50">
-                {syncing ? 'syncing…' : syncDone ? 'synced ✓' : 'sync to reminders'}
-              </button>
-            )}
+            <button onClick={handleSync} disabled={syncing} className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm rounded-lg transition-colors disabled:opacity-50">
+              {syncing ? 'syncing…' : syncDone ? 'synced ✓' : 'sync to reminders'}
+            </button>
             {checkedCount > 0 && (
               <button onClick={clearChecked} className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-sm rounded-lg transition-colors">
                 clear {checkedCount} ticked
