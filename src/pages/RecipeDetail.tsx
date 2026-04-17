@@ -221,9 +221,50 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
       .replace(re('cl'), (_, n) => `${formatAmount(parseAmt(n) * 0.33814)} fl oz`)
   }
 
+  function convertToMetric(s: string): string {
+    const unicodeFracs: Record<string, number> = { '½':0.5,'¼':0.25,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875 }
+    const uf = '[½¼¾⅓⅔⅛⅜⅝⅞]'
+    const numPat = `(?:\\d+\\s+\\d+\\/\\d+|\\d+\\s+${uf}|\\d+(?:\\.\\d+)?|\\d+\\/\\d+|${uf})`
+
+    function parseAmt(n: string): number {
+      const mixedUni = n.match(/^(\d+)\s+([½¼¾⅓⅔⅛⅜⅝⅞])$/)
+      if (mixedUni) return parseInt(mixedUni[1]) + (unicodeFracs[mixedUni[2]] ?? 0)
+      const mixedFrac = n.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+      if (mixedFrac) return parseInt(mixedFrac[1]) + parseInt(mixedFrac[2]) / parseInt(mixedFrac[3])
+      const frac = n.match(/^(\d+)\/(\d+)$/)
+      if (frac) return parseInt(frac[1]) / parseInt(frac[2])
+      if (unicodeFracs[n]) return unicodeFracs[n]
+      return parseFloat(n)
+    }
+
+    function roundMetric(val: number): string {
+      if (val >= 100) return String(Math.round(val / 10) * 10)
+      if (val >= 10) return String(Math.round(val / 5) * 5)
+      return String(Math.round(val * 10) / 10)
+    }
+
+    const re = (unit: string) => new RegExp(`(${numPat})\\s*${unit}\\b`, 'gi')
+    return s
+      .replace(re('lbs?'), (_, n) => `${roundMetric(parseAmt(n) * 453.592)}g`)
+      .replace(re('oz'), (_, n) => `${roundMetric(parseAmt(n) * 28.3495)}g`)
+      .replace(re('cups?'), (_, n) => `${roundMetric(parseAmt(n) * 236.588)}ml`)
+      .replace(re('fl\\s?oz'), (_, n) => `${roundMetric(parseAmt(n) * 29.5735)}ml`)
+      .replace(re('tbsp'), (_, n) => `${roundMetric(parseAmt(n) * 14.7868)}ml`)
+      .replace(re('tsp'), (_, n) => `${roundMetric(parseAmt(n) * 4.92892)}ml`)
+  }
+
+  function detectUnits(ingredient: string): 'metric' | 'imperial' | 'none' {
+    if (/\b(kg|g|ml|dl|cl|l)\b/i.test(ingredient)) return 'metric'
+    if (/\b(lbs?|oz|cups?|fl\s?oz|tbsp|tsp)\b/i.test(ingredient)) return 'imperial'
+    return 'none'
+  }
+
   function displayIngredient(ingredient: string): string {
     const scaled = scaleIngredient(ingredient)
-    return units === 'imperial' ? convertToImperial(scaled) : scaled
+    const recipeUnits = detectUnits(scaled)
+    if (units === 'imperial' && recipeUnits === 'metric') return convertToImperial(scaled)
+    if (units === 'metric' && recipeUnits === 'imperial') return convertToMetric(scaled)
+    return scaled
   }
 
   function formatIngredient(text: string) {
