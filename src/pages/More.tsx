@@ -223,20 +223,26 @@ export default function More() {
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
             if (raw.serves) recipe.portions = raw.serves
-            if (raw.duration) recipe.prep_time_mins = Math.round(Number(raw.duration) / 60)
-            if (raw.cookingDuration) recipe.cook_time_mins = Math.round(Number(raw.cookingDuration) / 60)
+            const prepMins = raw.duration ? Math.round(Number(raw.duration) / 60) : 0
+            recipe.prep_time_mins = prepMins || null
+            const cookMins = raw.cookingDuration ? Math.round(Number(raw.cookingDuration) / 60) : 0
+            recipe.cook_time_mins = cookMins || null
             if (Array.isArray(raw.images) && raw.images.length > 0) {
-              const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
-              const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
-              const filename = `${Date.now()}.jpg`
-              const { data: uploadData } = await supabase.storage
-                .from('recipe-photos')
-                .upload(filename, bytes, { contentType: 'image/jpeg' })
-              if (uploadData) {
-                const { data: urlData } = supabase.storage
+              try {
+                const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
+                const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+                const filename = `${Date.now()}.jpg`
+                const { data: uploadData } = await supabase.storage
                   .from('recipe-photos')
-                  .getPublicUrl(uploadData.path)
-                recipe.photo_url = urlData.publicUrl
+                  .upload(filename, bytes, { contentType: 'image/jpeg' })
+                if (uploadData) {
+                  const { data: urlData } = supabase.storage
+                    .from('recipe-photos')
+                    .getPublicUrl(uploadData.path)
+                  recipe.photo_url = urlData.publicUrl
+                }
+              } catch (imgErr) {
+                console.error('image upload failed for', crumbFile.name, imgErr)
               }
             }
             toInsert.push(recipe)
