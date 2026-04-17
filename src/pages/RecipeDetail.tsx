@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, type Recipe, type CookEntry, type Collection } from '../lib/supabase'
 import { addIngredientsToList } from './GroceryList'
+import FloatingTimer from '../components/FloatingTimer'
 
 type Props = {
   recipe: Recipe
@@ -31,6 +32,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [recipeCollections, setRecipeCollections] = useState<Collection[]>([])
   const [allCollections, setAllCollections] = useState<Collection[]>([])
   const [showCollectionPicker, setShowCollectionPicker] = useState(false)
+  const [showTimer, setShowTimer] = useState(false)
 
   useEffect(() => {
     supabase
@@ -321,6 +323,12 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
         {/* Toggles */}
         <div className="px-6 py-4 border-b-2 border-stone-200 flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setShowTimer(t => !t)}
+            className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full border transition-colors ${showTimer ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-200 text-stone-400 hover:text-stone-600'}`}
+          >
+            ⏱ timer
+          </button>
           <div className="flex items-center rounded-full border border-stone-200 p-1">
             <button onClick={() => { if (units !== 'metric') toggleUnits() }}
               className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full transition-colors ${units === 'metric' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
@@ -588,6 +596,8 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           )}
         </div>
       </div>
+
+      {showTimer && <FloatingTimer onClose={() => setShowTimer(false)} />}
     </div>
   )
 }
