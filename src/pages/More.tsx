@@ -194,16 +194,10 @@ export default function More() {
         for (const crumbFile of crumbFiles) {
           console.log('processing file:', crumbFile.name)
           try {
-            // Try plain text first; fall back to gzip if it fails
-            let text: string
-            try {
-              text = await crumbFile.async('text')
-              JSON.parse(text) // validate — throws if binary garbage
-            } catch {
-              const compressed = await crumbFile.async('uint8array')
-              text = await gunzip(compressed)
-            }
+            const text = await crumbFile.async('text')
+            console.log('raw content start:', text.slice(0, 200))
             const raw = JSON.parse(text)
+            console.log('keys:', Object.keys(raw))
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
