@@ -15,11 +15,16 @@ function isNative(): boolean {
 }
 
 export async function requestRemindersPermission(): Promise<boolean> {
+  console.log('[Reminders] isNative:', isNative())
+  console.log('[Reminders] Capacitor object:', (window as any).Capacitor)
   if (!isNative()) { console.log('[Reminders] not native, skipping'); return false }
   try {
+    console.log('[Reminders] calling requestPermission...')
     const { granted } = await RemindersPlugin.requestPermission()
+    console.log('[Reminders] granted:', granted)
     return granted
-  } catch {
+  } catch (e) {
+    console.log('[Reminders] error:', e)
     return false
   }
 }
