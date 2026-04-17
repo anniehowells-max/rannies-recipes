@@ -194,6 +194,7 @@ export default function More() {
           try {
             const text = await crumbFile.async('text')
             const raw = JSON.parse(text)
+            console.log('duration:', raw.duration, 'cookingDuration:', raw.cookingDuration)
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
