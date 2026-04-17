@@ -188,6 +188,33 @@ export default function GroceryList({ onBack }: Props) {
     init()
   }, [])
 
+  // Poll Reminders every 5 seconds and sync on visibility change
+  useEffect(() => {
+    if (!remindersEnabled) return
+
+    async function pullFromReminders() {
+      const current = loadGroceryList()
+      const updated = await pullCompletionsFromReminders(current)
+      const changed = updated.some((item, i) => item.checked !== current[i]?.checked)
+      if (changed) {
+        setItems(updated)
+        saveGroceryList(updated)
+      }
+    }
+
+    const interval = setInterval(pullFromReminders, 5000)
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') pullFromReminders()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [remindersEnabled])
+
   function updateItems(updated: GroceryItem[]) {
     setItems(updated)
     saveGroceryList(updated)

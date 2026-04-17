@@ -12,7 +12,7 @@ public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
     ]
 
     private let store = EKEventStore()
-    private let listName = "Our Kitchen"
+    private let listName = "Rannie's Recipes"
 
     @objc func requestPermission(_ call: CAPPluginCall) {
         if #available(iOS 17.0, *) {
@@ -68,8 +68,8 @@ public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
                 guard let id = item["id"] as? String,
                       let title = item["title"] as? String,
                       let completed = item["completed"] as? Bool else { continue }
-                let tag = "kitchen:\(id)"
-                if let reminder = existingReminders.first(where: { $0.notes?.contains(tag) == true }) {
+                let urlString = "kitchen://id/\(id)"
+                if let reminder = existingReminders.first(where: { $0.url?.absoluteString == urlString }) {
                     if reminder.isCompleted != completed {
                         reminder.isCompleted = completed
                         try? self.store.save(reminder, commit: false)
@@ -77,7 +77,7 @@ public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
                 } else {
                     let reminder = EKReminder(eventStore: self.store)
                     reminder.title = title
-                    reminder.notes = tag
+                    reminder.url = URL(string: urlString)
                     reminder.isCompleted = completed
                     reminder.calendar = list
                     try? self.store.save(reminder, commit: false)
@@ -86,8 +86,8 @@ public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
 
             // Remove reminders that have been deleted from the app
             for reminder in existingReminders {
-                guard let notes = reminder.notes, notes.hasPrefix("kitchen:") else { continue }
-                let reminderId = String(notes.dropFirst("kitchen:".count))
+                guard let url = reminder.url?.absoluteString, url.hasPrefix("kitchen://id/") else { continue }
+                let reminderId = String(url.dropFirst("kitchen://id/".count))
                 if !incomingIds.contains(reminderId) {
                     try? self.store.remove(reminder, commit: false)
                 }
@@ -118,8 +118,8 @@ public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
             group.wait()
 
             let result: [[String: Any]] = allReminders.compactMap { reminder in
-                guard let notes = reminder.notes, notes.hasPrefix("kitchen:") else { return nil }
-                let id = String(notes.dropFirst("kitchen:".count))
+                guard let url = reminder.url?.absoluteString, url.hasPrefix("kitchen://id/") else { return nil }
+                let id = String(url.dropFirst("kitchen://id/".count))
                 return ["id": id, "completed": reminder.isCompleted]
             }
 
