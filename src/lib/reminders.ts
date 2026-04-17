@@ -10,8 +10,12 @@ const RemindersPlugin = registerPlugin<RemindersPlugin>('Reminders')
 
 // Returns true if running inside a Capacitor native app (not web browser)
 function isNative(): boolean {
-  return !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } })
-    .Capacitor?.isNativePlatform?.()
+  const cap = (window as any).Capacitor
+  console.log('[Reminders] Capacitor:', JSON.stringify(cap))
+  if (!cap) return false
+  if (typeof cap.isNativePlatform === 'function') return cap.isNativePlatform()
+  if (cap.platform) return cap.platform !== 'web'
+  return false
 }
 
 export async function requestRemindersPermission(): Promise<boolean> {
