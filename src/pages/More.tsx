@@ -223,6 +223,8 @@ export default function More() {
             if (Array.isArray(raw.tags)) recipe.tags = raw.tags.map(String).filter(Boolean)
             if (raw.source) recipe.source_url = String(raw.source)
             if (raw.serves) recipe.portions = raw.serves
+            if (raw.duration) recipe.prep_time_mins = Math.round(Number(raw.duration) / 60)
+            if (raw.cookingDuration) recipe.cook_time_mins = Math.round(Number(raw.cookingDuration) / 60)
             if (Array.isArray(raw.images) && raw.images.length > 0) {
               const base64 = String(raw.images[0]).replace(/^data:image\/\w+;base64,/, '')
               const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
