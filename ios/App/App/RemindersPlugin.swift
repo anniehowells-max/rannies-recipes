@@ -2,7 +2,15 @@ import Capacitor
 import EventKit
 
 @objc(RemindersPlugin)
-public class RemindersPlugin: CAPPlugin {
+public class RemindersPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "RemindersPlugin"
+    public let jsName = "Reminders"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "syncItems", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCompletions", returnType: CAPPluginReturnPromise),
+    ]
+
     private let store = EKEventStore()
     private let listName = "Our Kitchen"
 
@@ -117,15 +125,5 @@ public class RemindersPlugin: CAPPlugin {
 
             call.resolve(["items": result])
         }
-    }
-}
-
-extension RemindersPlugin {
-    override public static func pluginMethods() -> [CAPPluginMethod] {
-        return [
-            CAPPluginMethod(name: "requestPermission", returnType: CAPPluginReturnPromise),
-            CAPPluginMethod(name: "syncItems", returnType: CAPPluginReturnPromise),
-            CAPPluginMethod(name: "getCompletions", returnType: CAPPluginReturnPromise),
-        ]
     }
 }
