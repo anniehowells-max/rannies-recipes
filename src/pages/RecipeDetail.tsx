@@ -161,11 +161,12 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
   }
 
   function parseFraction(s: string): number {
-    const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+    const n = s.replace(',', '.')
+    const mixed = n.match(/^(\d+)\s+(\d+)\/(\d+)$/)
     if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3])
-    const frac = s.match(/^(\d+)\/(\d+)$/)
+    const frac = n.match(/^(\d+)\/(\d+)$/)
     if (frac) return parseInt(frac[1]) / parseInt(frac[2])
-    return parseFloat(s)
+    return parseFloat(n)
   }
 
   function formatAmount(n: number): string {
@@ -182,7 +183,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
   function scaleIngredient(ingredient: string): string {
     if (!recipe.portions) return ingredient
     const factor = portions / recipe.portions
-    return ingredient.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/, match =>
+    return ingredient.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)/, match =>
       formatAmount(parseFraction(match) * factor)
     )
   }
@@ -227,7 +228,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDupli
 
   function formatIngredient(text: string) {
     // Match leading number/fraction and optional unit, e.g. "110g", "2 tbsp", "1/2 tsp", "½ cup"
-    const match = text.match(/^(\d+(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg|g|ml|dl|cl|tbsp|tsp|cups?|fl\s?oz|oz|lbs?|lb|pinch|handful|bunch|slices?|cans?|l(?=[\s,]|$)))?/i)
+    const match = text.match(/^(\d+(?:[.,]\d+)?(?:\s+\d+\/\d+|\s*[½¼¾⅓⅔⅛⅜⅝⅞])?|\d+\/\d+|[½¼¾⅓⅔⅛⅜⅝⅞])(\s*(?:kg\b|g\b|ml\b|dl\b|cl\b|tbsp\b|tsp\b|cups?\b|fl\s?oz\b|oz\b|lbs?\b|lb\b|pinch\b|handful\b|bunch\b|slices?\b|cans?\b|l(?=[\s,]|$)))?/i)
     if (!match || !match[0]) return <>{text}</>
     const bold = match[0]
     const rest = text.slice(bold.length)
