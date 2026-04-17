@@ -313,18 +313,18 @@ export default function FloatingTimer({ onClose }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-4 pb-4 pt-2">
         {timers.length < 2 ? (
           <button
             onClick={addTimer}
-            className="font-ui text-xs tracking-wider uppercase text-stone-400 hover:text-amber-500 transition-colors"
+            className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors"
           >
             + add timer
           </button>
         ) : <span />}
         <button
           onClick={onClose}
-          className="font-ui text-xs tracking-wider uppercase text-stone-300 hover:text-stone-500 transition-colors"
+          className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors"
         >
           close
         </button>

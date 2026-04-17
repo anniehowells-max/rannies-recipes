@@ -8,9 +8,10 @@ type Props = {
   onBack: () => void
   onDelete: () => void
   onEdit: () => void
+  onDuplicate: (recipe: Recipe) => void
 }
 
-export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props) {
+export default function RecipeDetail({ recipe, onBack, onDelete, onEdit, onDuplicate }: Props) {
   const [rating, setRating] = useState<number | null>(recipe.rating)
   const [hoverRating, setHoverRating] = useState<number | null>(null)
   const [portions, setPortions] = useState<number>(recipe.portions ?? 1)
@@ -33,6 +34,15 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
   const [allCollections, setAllCollections] = useState<Collection[]>([])
   const [showCollectionPicker, setShowCollectionPicker] = useState(false)
   const [showTimer, setShowTimer] = useState(false)
+  const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set())
+
+  function toggleStep(i: number) {
+    setCheckedSteps(prev => {
+      const next = new Set(prev)
+      next.has(i) ? next.delete(i) : next.add(i)
+      return next
+    })
+  }
 
   useEffect(() => {
     supabase
@@ -140,6 +150,16 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
     onDelete()
   }
 
+  async function handleDuplicate() {
+    const { id: _id, created_at: _ca, cook_log: _cl, ...fields } = recipe
+    const { data } = await supabase
+      .from('recipes')
+      .insert({ ...fields, title: `${recipe.title} (copy)` })
+      .select()
+      .single()
+    if (data) onDuplicate(data)
+  }
+
   function parseFraction(s: string): number {
     const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/)
     if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3])
@@ -243,6 +263,7 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           </button>
           <div className="flex gap-2">
             <button onClick={onEdit} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-900 hover:bg-black text-white rounded-lg transition-colors">edit</button>
+            <button onClick={handleDuplicate} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-lg transition-colors">duplicate</button>
             <button onClick={handleDelete} className="font-ui text-xs tracking-wider uppercase px-4 py-2.5 bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-600 rounded-lg transition-colors">delete</button>
           </div>
         </div>
@@ -323,12 +344,6 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
 
         {/* Toggles */}
         <div className="px-6 py-4 border-b-2 border-stone-200 flex items-center gap-3 flex-wrap">
-          <button
-            onClick={() => setShowTimer(t => !t)}
-            className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full border transition-colors ${showTimer ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-200 text-stone-400 hover:text-stone-600'}`}
-          >
-            ⏱ timer
-          </button>
           <div className="flex items-center rounded-full border border-stone-200 p-1">
             <button onClick={() => { if (units !== 'metric') toggleUnits() }}
               className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full transition-colors ${units === 'metric' ? 'bg-stone-900 text-white' : 'text-stone-400'}`}>
@@ -348,6 +363,20 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
                 className="font-ui text-xs tracking-wider px-4 py-2 rounded-full transition-colors text-stone-400 hover:text-stone-600">+</button>
             </div>
           )}
+          <div className="flex items-center rounded-full border border-stone-200 p-1">
+            <button
+              onClick={() => setShowTimer(t => !t)}
+              className={`font-ui text-xs tracking-wider uppercase px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 ${showTimer ? 'bg-stone-900 text-white' : 'text-stone-400 hover:text-stone-600'}`}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="9.5" r="5"/>
+                <path d="M8 4.5V2.5"/>
+                <path d="M6 2.5h4"/>
+                <path d="M8 9.5V7"/>
+              </svg>
+              timer
+            </button>
+          </div>
         </div>
 
         {/* Ingredients + Method two-column on iPad+ */}
@@ -401,10 +430,22 @@ export default function RecipeDetail({ recipe, onBack, onDelete, onEdit }: Props
           <ol className="space-y-5">
             {(recipe.steps || []).map((step, i) => (
               <li key={i} className="flex items-start gap-4 text-base text-stone-700">
-                <span className="font-ui text-[10px] tracking-widest text-stone-300 font-semibold flex-shrink-0 mt-1.5 w-4">
+                <span className="font-ui text-[10px] tracking-widest text-stone-300 font-semibold flex-shrink-0 w-4">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="leading-relaxed">{step}</span>
+                <button
+                  onClick={() => toggleStep(i)}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-1 transition-colors ${
+                    checkedSteps.has(i) ? 'bg-stone-900 border-stone-900' : 'border-stone-300 hover:border-stone-500'
+                  }`}
+                >
+                  {checkedSteps.has(i) && (
+                    <svg viewBox="0 0 10 8" className="w-3 h-3">
+                      <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+                <span className={`leading-relaxed transition-colors ${checkedSteps.has(i) ? 'text-stone-300 line-through' : ''}`}>{step}</span>
               </li>
             ))}
           </ol>

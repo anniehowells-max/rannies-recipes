@@ -45,6 +45,7 @@ export default function App() {
           onBack={() => setScreen(recipeFrom)}
           onDelete={refresh}
           onEdit={() => setScreen('edit')}
+          onDuplicate={r => { setSelectedRecipe(r); setScreen('edit') }}
         />
       )
     }

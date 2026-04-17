@@ -12,7 +12,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
   const [search, setSearch] = useState('')
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
-  const [sort, setSort] = useState<'default' | 'alpha' | 'time'>('default')
+  const [sort, setSort] = useState<'default' | 'alpha' | 'time' | 'cooked'>('default')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [cookCounts, setCookCounts] = useState<Record<string, number>>({})
 
@@ -63,6 +63,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
         const bTime = (b.prep_time_mins ?? 0) + (b.cook_time_mins ?? 0)
         return aTime - bTime
       }
+      if (sort === 'cooked') return (cookCounts[b.id] ?? 0) - (cookCounts[a.id] ?? 0)
       return 0
     })
 
@@ -97,7 +98,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
         {/* Sort */}
         <div className="flex items-center gap-2 mb-4">
           <span className="font-ui text-[10px] tracking-wider uppercase text-stone-400">sort</span>
-          {(['default', 'alpha', 'time'] as const).map(option => (
+          {(['default', 'alpha', 'time', 'cooked'] as const).map(option => (
             <button
               key={option}
               onClick={() => setSort(option)}
@@ -107,7 +108,7 @@ export default function RecipeList({ onSelect, refreshKey }: Props) {
                   : 'border-stone-200 text-stone-400 hover:border-stone-300'
               }`}
             >
-              {option === 'default' ? 'recent' : option === 'alpha' ? 'a–z' : 'time'}
+              {option === 'default' ? 'recent' : option === 'alpha' ? 'a–z' : option === 'time' ? 'time' : 'most cooked'}
             </button>
           ))}
         </div>
