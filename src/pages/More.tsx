@@ -202,7 +202,6 @@ export default function More() {
               text = await gunzip(compressed)
             }
             const raw = JSON.parse(text)
-            console.log(Object.keys(raw))
             const recipe: Record<string, unknown> = {}
             if (raw.name) recipe.title = String(raw.name)
             if (!recipe.title) continue
@@ -212,8 +211,8 @@ export default function More() {
                   [i.quantity, i.unit, i.name].filter(Boolean).map(String).join(' ').trim()
                 )
                 .filter(Boolean)
-            if (Array.isArray(raw.steps))
-              recipe.steps = raw.steps
+            if (Array.isArray(raw.method))
+              recipe.steps = raw.method
                 .map((s: Record<string, unknown>) => String(s.directions ?? '').trim())
                 .filter(Boolean)
             if (raw.notes) recipe.notes = String(raw.notes)
